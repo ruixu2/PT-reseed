@@ -19,7 +19,7 @@ lerna-debug.log*
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
@@ -216,6 +216,16 @@ AGENTS.md
 GEMINI.md
 CLAUDE.md
 .playwright-mcp/
+.gemini/
+
+# Hidden files and folders
+.history/
+.temp/
+.tmp/
+.project
+.settings/
+.classpath
+.factorypath
 
 # docker
 docker-compose.yml
