@@ -147,6 +147,7 @@
       "SearchEntity": "Search Results",
       "SearchResultSnapshot": "Search Snapshot",
       "CrossSeed": "Cross-Seeding",
+      "LocalSeedingDashboard": "Local Seeding Dashboard",
       "default": "Overview"
     },
     "Settings": {
@@ -273,7 +274,11 @@
       "L1": "Exact Match",
       "L1_desc": "File size and structure are identical. Safe for direct cross-seeding.",
       "L2": "Fuzzy Match",
-      "L2_desc": "Primary file matches, but minor files (NFO/images) may differ. Selective download recommended."
+      "L2_desc": "Primary file matches, but minor files (NFO/images) may differ. Selective download recommended.",
+      "L2.5": "Strict Structure Match",
+      "L2.5_desc": "Remote torrent parsed. File structure and all sub-file sizes match strictly. Very safe for cross-seeding.",
+      "L3": "True Piece Hash Match",
+      "L3_desc": "Background comparison of pieces hash completed. 100% identical physical data. Zero risk cross-seeding."
     },
     "localMatch": "Locally Stored",
     "quickCrossSeed": "One-Click Cross-Seed",
@@ -281,7 +286,8 @@
     "selectTargetClient": "Select Target Downloader",
     "tabs": {
       "analysis": "Analysis",
-      "queue": "Automation Queue"
+      "queue": "Automation Queue",
+      "statistics": "Dashboard"
     },
     "addToQueue": "Add to Queue",
     "addQueueSuccess": "Added {count} torrents to queue",
@@ -296,7 +302,57 @@
       "no_match": "No Match",
       "error": "Error",
       "completed": "Completed"
+    },
+    "staging": {
+      "title": "Pending Review",
+      "intro": "These are auto-matched candidates found by the background reseed runner. Review each item and confirm injection into the downloader, or ignore unsuitable ones.",
+      "noPendingItems": "No items pending review. Auto-matched resources will appear here.",
+      "approveSelected": "Approve & Inject",
+      "ignoreSelected": "Ignore Selected",
+      "approveAll": "Approve All & Inject",
+      "batchApproved": "Successfully approved and injected {count} items",
+      "batchApprovedError": "Batch approve and inject failed",
+      "batchIgnored": "Ignored {count} items",
+      "batchIgnoredError": "Batch ignore failed",
+      "singleApproved": "Torrent injected into downloader",
+      "singleApprovedError": "Injection failed",
+      "singleIgnored": "Resource ignored",
+      "singleIgnoredError": "Ignore operation failed",
+      "reviewConfirm": "Confirm injecting {count} selected resources into the downloader?",
+      "ignoreConfirm": "Confirm ignoring {count} selected resources?",
+      "colSite": "Match Site",
+      "colTitle": "Torrent Title",
+      "colSize": "Size",
+      "colMatchLevel": "Match Level",
+      "colAction": "Action",
+      "sourceInfo": "Source Torrent",
+      "matchedCount": "Match Count",
+      "targetDownloader": "Target Downloader",
+      "noResultsForTask": "No results"
+    },
+    "stats": {
+      "totalMetadata": "Cached Local Torrents",
+      "duplicateGroups": "Local Duplicate Groups",
+      "totalTasks": "Total Background Tasks",
+      "totalInjected": "Successful Cross-Seeds",
+      "taskStatus": "Task Status Distribution",
+      "siteDistribution": "Cross-Site Match Distribution",
+      "matchCount": "Match Count"
     }
+  },
+  "LocalSeedingDashboard": {
+    "totalSeeds": "Total Seeding",
+    "ptSeeds": "PT Seeds",
+    "btSeeds": "BT Seeds",
+    "totalSize": "Total Size",
+    "totalUploaded": "Total Uploaded",
+    "averageRatio": "Avg Ratio",
+    "errorSeeds": "Error Seeds",
+    "noData": "No seeding data yet. Make sure downloaders are configured and running.",
+    "clientDist": "Client Load Distribution",
+    "siteDist": "Site Seeding Distribution (Top 15)",
+    "seedCount": "Seed Count",
+    "topHugeSeeds": "Space Killers (Top 10 Huge Seeds)"
   },
   "KeepUploadTask": {
     "title": "Reseed Tasks",
@@ -632,13 +688,41 @@
   },
   "SetBase": {
     "tab": {
-      "ui": "Option UI",
+      "ui": "UI",
       "search-entity": "@:common.search",
       "download": "Download",
-      "user-info": "UserInfo",
+      "user-info": "User Info",
       "backup": "Backup & Restore",
-      "social-information": "Social Rating",
-      "native-bridge": "Native Bridge"
+      "social-information": "Media Score",
+      "native-bridge": "Native Bridge",
+      "cross-seed": "Automation"
+    },
+    "CrossSeedWindow": {
+      "intro": "Configure the automated cross-seeding behavior of the background Reseed Runner. Automated tasks will silently scan local torrents and search for reseedable resources on other PT sites.",
+      "scheduleTitle": "Schedule",
+      "autoScanInterval": "Auto Scan Frequency",
+      "intervalDisabled": "Disable Auto Scan (Manual Only)",
+      "intervalHours": "Every {hours} hours",
+      "iyuuTitle": "IYUU Global Database",
+      "iyuuDesc": "Enter your IYUU Partner Token. Once configured, the system will instantly query the global IYUU database using the InfoHash to find cross-seed targets, significantly boosting speed and saving site API quotas.",
+      "iyuuToken": "IYUU Token",
+      "targetSitesTitle": "Target Sites",
+      "targetSitesDesc": "Select the sites to query during background automated searches. If left empty, all enabled PT sites will be searched.",
+      "targetSites": "Sites for Auto Search",
+      "pathMappingTitle": "Smart Path Mapping",
+      "pathMappingDesc": "When cross-seeding between different clients (e.g., local qBittorrent to remote Transmission), configure replacement rules here if their save paths differ (regex supported).",
+      "fromClient": "Source Client",
+      "toClient": "Target Client",
+      "searchPath": "Search / Regex",
+      "replacePath": "Replace With",
+      "addMapping": "Add Mapping Rule",
+      "automationTitle": "Automation Actions",
+      "autoInject": "Auto-inject matches silently into downloader",
+      "autoInjectDesc": "If enabled, when an L1 (Exact Match) is found, it bypasses manual review and is pushed directly to the original downloader at the same path (paused for checking).",
+      "safeInjectOnly": "Site Rule Protection (Anti-H&R)",
+      "safeInjectOnlyDesc": "Recommended. Before auto-injection, it checks the target torrent's tags. If it has H&R (Hit and Run) or penalty tags, auto-injection is blocked and moved to pending review to protect your account.",
+      "autoResume": "Auto-resume seeding after hash check",
+      "autoResumeDesc": "If enabled, the background monitor will check newly injected torrents. Once their hash check reaches 100% without errors, they will automatically be resumed for seeding."
     },
     "ui": {
       "changeLanguage": "Switch Language",
@@ -721,38 +805,6 @@
       "userDataRefresh": "User Data Refresh",
       "afterTime": "Earliest daily refresh time",
       "userInfoDisplay": "User Info Display"
-    }
-  },
-  "SetNativeBridge": {
-    "permission": {
-      "title": "Permission",
-      "granted": "Permission Granted",
-      "notGranted": "Permission Not Granted",
-      "grant": "Grant Permission",
-      "revoke": "Revoke Permission",
-      "grantFailed": "Permission request was denied"
-    },
-    "bridge": {
-      "title": "Bridge Control",
-      "enabled": "Enable Native Bridge",
-      "testConnection": "Test Connection",
-      "status": {
-        "no-permission": "No Permission",
-        "disabled": "Disabled",
-        "connecting": "Connecting...",
-        "connected": "Connected",
-        "retrying": "Retrying...",
-        "error": "Error"
-      }
-    },
-    "info": {
-      "title": "About Native Bridge",
-      "description": "The native bridge allows the PT-reseed CLI tool to communicate with this extension. It requires the CLI tool to be installed separately on your computer.",
-      "cliRequired": "The external CLI tool must be installed for this feature to work. Native bridge is not available on mobile platforms. See {0} for installation instructions.",
-      "cliLink": "ptd-cli",
-      "setupCommand": "Run the following command to register this extension with the CLI tool:",
-      "setupHint": "After running the command, restart the browser or click Test Connection.",
-      "privacy": "When enabled, the native bridge allows the locally installed CLI tool to access extension data including site configuration, search results, download history, user info, and downloader status. All communication is local (between browser and local process) — no data is sent to remote servers. You can disable this feature or revoke the permission at any time."
     }
   },
   "SetDownloader": {

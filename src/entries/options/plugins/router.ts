@@ -27,12 +27,6 @@ export const setBaseChildren: RouteRecordRaw[] = [
     component: () => import("../views/Settings/SetBase/UserInfoWindow.vue"),
   },
   {
-    path: "native-bridge",
-    name: "SetBaseNativeBridge",
-    meta: { icon: "mdi-connection", usesGlobalSave: false },
-    component: () => import("../views/Settings/SetBase/NativeBridgeWindow.vue"),
-  },
-  {
     path: "backup",
     name: "SetBaseBackup",
     meta: { icon: "mdi-backup-restore" },
@@ -43,6 +37,12 @@ export const setBaseChildren: RouteRecordRaw[] = [
     name: "SetBaseSocialInformation",
     meta: { icon: "mdi-multimedia" },
     component: () => import("../views/Settings/SetBase/SocialInformationWindow.vue"),
+  },
+  {
+    path: "cross-seed",
+    name: "SetBaseCrossSeed",
+    meta: { icon: "mdi-magnify-scan" },
+    component: () => import("../views/Settings/SetBase/CrossSeedWindow.vue"),
   },
 ] as const;
 
@@ -94,6 +94,12 @@ export const routes: RouteRecordRaw[] = [
         name: "CrossSeed",
         meta: { icon: "mdi-magnify-scan" },
         component: () => import("../views/Overview/CrossSeed/Index.vue"),
+      },
+      {
+        path: "/local-seeding-dashboard",
+        name: "LocalSeedingDashboard",
+        meta: { icon: "mdi-chart-bar" },
+        component: () => import("../views/Overview/LocalSeedingDashboard/Index.vue"),
       },
     ],
   },

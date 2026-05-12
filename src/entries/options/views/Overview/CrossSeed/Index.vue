@@ -9,6 +9,7 @@ import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import SearchResultDialog from "./SearchResultDialog.vue";
 import QueueList from "./QueueList.vue";
+import StagingArea from "./StagingArea.vue";
 
 const { t } = useI18n();
 const runtimeStore = useRuntimeStore();
@@ -117,6 +118,9 @@ onMounted(async () => {
     <v-tabs v-model="tab" color="primary" density="compact" class="mb-4">
       <v-tab value="analysis" prepend-icon="mdi-google-analytics">
         {{ t("CrossSeed.tabs.analysis") }}
+      </v-tab>
+      <v-tab value="staging" prepend-icon="mdi-clipboard-check-outline">
+        {{ t("CrossSeed.staging.title") }}
       </v-tab>
       <v-tab value="queue" prepend-icon="mdi-tray-full">
         {{ t("CrossSeed.tabs.queue") }}
@@ -238,8 +242,16 @@ onMounted(async () => {
         </v-card>
       </v-window-item>
 
+      <v-window-item value="staging">
+        <StagingArea />
+      </v-window-item>
+
       <v-window-item value="queue">
         <QueueList />
+      </v-window-item>
+
+      <v-window-item value="statistics">
+        <Statistics />
       </v-window-item>
     </v-window>
 

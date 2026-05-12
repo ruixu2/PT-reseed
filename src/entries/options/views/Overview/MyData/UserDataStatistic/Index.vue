@@ -404,7 +404,7 @@ async function exportStatisticImg() {
 
   const textX = containerWidth.value - 10; // 距离右侧边缘 10px
   const textY = yIndex;
-  ctx.fillText("Created By PT-Depiler (" + __EXT_VERSION__ + ") at " + createdAt, textX, textY);
+  ctx.fillText("Created By PT-reseed (" + __EXT_VERSION__ + ") at " + createdAt, textX, textY);
 
   // 导出图片
   mainCanvas.toBlob((blob) => {

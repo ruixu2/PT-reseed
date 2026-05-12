@@ -17,8 +17,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea/
 *.suo
 *.ntvs*
@@ -226,6 +225,13 @@ CLAUDE.md
 .settings/
 .classpath
 .factorypath
+
+# IDE / tooling
+.workbuddy/
+.husky/
+
+# Python cache
+__pycache__/
 
 # docker
 docker-compose.yml

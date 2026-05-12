@@ -12,9 +12,121 @@ import { sleep } from "~/helper.ts";
 export enum EJobType {
   FlushUserInfo = "flushUserInfo",
   ReDownloadTorrent = "reDownloadTorrent",
+  AutoCrossSeedScan = "autoCrossSeedScan",
+  AutoResumeInjectedTorrents = "autoResumeInjectedTorrents",
 }
 
 const jobs = defineJobScheduler();
+
+function autoResumeInjectedTorrents() {
+  return async () => {
+    await setupOffscreenDocument();
+
+    const configStore = (await extStorage.getItem("config"))!;
+    if (!configStore?.crossSeedControl?.autoResume) return;
+
+    sendMessage("logger", { msg: "Running Auto-Resume check for injected torrents" }).catch();
+
+    try {
+      const allResults = (await sendMessage("getAllReseedResults", undefined)) as any[];
+      const injectedResults = allResults.filter(
+        (r) => r.status === "injected" && r.targetClientId && r.targetTorrentHash,
+      );
+
+      for (const res of injectedResults) {
+        try {
+          const torrents = (await sendMessage("getDownloaderTorrents", res.targetClientId)) as any[];
+          const targetTorrent = torrents.find(
+            (t) => t.infoHash === res.targetTorrentHash || t.id === res.targetTorrentHash,
+          );
+
+          if (targetTorrent) {
+            // 如果进度达到 100%，或者已经是完成状态，且当前不是错误状态
+            if (targetTorrent.progress >= 100 && targetTorrent.state !== "error") {
+              sendMessage("logger", { msg: `Auto-resuming torrent: ${res.title}` }).catch();
+              await sendMessage("resumeDownloaderTorrent", {
+                downloaderId: res.targetClientId,
+                torrentId: targetTorrent.id,
+              });
+
+              // 更新状态为 seeding
+              res.status = "seeding";
+              await sendMessage("saveReseedResult", res);
+            }
+          }
+        } catch (e) {
+          sendMessage("logger", { msg: `Failed to check/resume torrent ${res.title}`, data: e }).catch();
+        }
+      }
+    } catch (e) {
+      sendMessage("logger", { msg: "Failed to process auto-resume job", data: e }).catch();
+    }
+  };
+}
+
+// noinspection JSIgnoredPromiseFromCall
+jobs.scheduleJob({
+  id: EJobType.AutoResumeInjectedTorrents,
+  type: "interval",
+  duration: 1000 * 60 * 5, // check every 5 minutes
+  immediate: true,
+  execute: autoResumeInjectedTorrents(),
+});
+
+function autoCrossSeedScan() {
+  return async () => {
+    await setupOffscreenDocument();
+
+    const configStore = (await extStorage.getItem("config"))!;
+    const intervalHours = configStore?.crossSeedControl?.autoScanInterval || 0;
+
+    if (!intervalHours) return;
+
+    const curDate = new Date();
+    let metadataStore = (await extStorage.getItem("metadata"))!;
+    const lastScanAt = metadataStore.lastCrossSeedScanAt || 0;
+
+    const nextScanTime = lastScanAt + intervalHours * 60 * 60 * 1000;
+    if (curDate.getTime() < nextScanTime) {
+      return;
+    }
+
+    sendMessage("logger", {
+      msg: `Auto-scanning downloaders for cross-seeding at ${format(curDate, "yyyy-MM-dd HH:mm:ss")}`,
+    }).catch();
+
+    const enabledDownloaders = Object.values(metadataStore.downloaders).filter((d) => d.enabled);
+    let totalAdded = 0;
+
+    for (const downloader of enabledDownloaders) {
+      try {
+        const torrents = (await sendMessage("getDownloaderTorrents", downloader.id)) as any[];
+        const finishedTorrents = torrents.filter((t) => t.isCompleted);
+        await sendMessage("addTorrentsToReseedQueue", finishedTorrents);
+        totalAdded += finishedTorrents.length;
+      } catch (e) {
+        sendMessage("logger", { msg: `Auto-scan failed for downloader ${downloader.id}`, data: e }).catch();
+      }
+    }
+
+    sendMessage("logger", {
+      msg: `Auto-scan finished. Added ${totalAdded} completed torrents to queue.`,
+    }).catch();
+
+    metadataStore = (await extStorage.getItem("metadata"))!;
+    metadataStore.lastCrossSeedScanAt = curDate.getTime();
+    await extStorage.setItem("metadata", metadataStore);
+  };
+}
+
+// noinspection JSIgnoredPromiseFromCall
+jobs.scheduleJob({
+  id: EJobType.AutoCrossSeedScan,
+  type: "interval",
+  duration: 1000 * 60 * 30, // check every 30 minutes
+  immediate: true,
+  execute: autoCrossSeedScan(),
+});
 
 function autoFlushUserInfo(retryIndex: number = 0) {
   return async () => {

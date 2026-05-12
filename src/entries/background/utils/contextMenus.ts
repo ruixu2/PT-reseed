@@ -11,7 +11,7 @@ import { type IDownloaderMetadata } from "@/shared/types/storages/metadata.ts";
 
 import { openOptionsPage } from "./base.ts";
 
-const contextMenusId = "PT-Depiler-Context-Menus";
+const contextMenusId = "PT-reseed-Context-Menus";
 
 const contextMenusClickEventBus = new Map<
   string | number,
@@ -237,7 +237,7 @@ async function createSearchMenu(baseMenuId: string, options: ICreateSearchMenuOp
 }
 
 async function initContextMenus(tab: chrome.tabs.Tab) {
-  // 这里不处理 https://github.com/pt-plugins/PT-depiler/pull/470#discussion_r2295102201 提到的情况，因为会导致后面的type错误
+  // 这里不处理 https://github.com/pt-plugins/PT-reseed/pull/470#discussion_r2295102201 提到的情况，因为会导致后面的type错误
   const configStore = (await extStorage.getItem("config"))! ?? {};
   const metadataStore = (await extStorage.getItem("metadata"))! ?? {};
 

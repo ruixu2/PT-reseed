@@ -48,7 +48,10 @@ export interface IReseedResult {
   title: string;
   subTitle?: string;
   size: number;
-  status: "pending" | "injected" | "ignored";
+  matchLevel?: string; // L1, L2, L2.5, L3
+  status: "pending" | "injected" | "ignored" | "seeding";
+  targetClientId?: string; // Client ID where the torrent was injected
+  targetTorrentHash?: string; // Hash of the injected torrent
   data: any; // raw torrent data from search
 }
 

@@ -51,7 +51,7 @@ export async function createBackupData(backupFields: TBackupFields[] = []): Prom
 
   backupData.manifest = {
     time: new Date().getTime(),
-    version: `PT-Depiler (${__EXT_VERSION__})`,
+    version: `PT-reseed (${__EXT_VERSION__})`,
   };
 
   logger({

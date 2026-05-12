@@ -513,7 +513,7 @@ function saveControl() {
                   text({
                     width: stageConfig.width - 20,
                     align: 'right',
-                    text: 'Created By PT-Depiler (' + ext_version + ') at ' + formatDate(timelineData.createAt),
+                    text: 'Created By PT-reseed (' + ext_version + ') at ' + formatDate(timelineData.createAt),
                     fontSize: 12,
                     fill: '#b5b5b5',
                   })

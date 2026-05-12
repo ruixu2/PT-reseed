@@ -135,6 +135,8 @@ export interface IMetadataPiniaStorageSchema {
   // 上一次自动刷新的时间戳
   lastUserInfoAutoFlushAt: number;
 
+  lastCrossSeedScanAt?: number;
+
   // 站点 host 映射表
   siteHostMap: Record<TSiteHost, TSiteKey>;
 

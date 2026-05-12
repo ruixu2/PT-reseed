@@ -179,15 +179,70 @@ export async function searchTorrentOnAllSites(infoHash: string) {
   const keyword = parsedName.imdbId ? `imdb|${parsedName.imdbId}` : parsedName.title;
 
   const metadataStore = (await sendMessage("getExtStorage", "metadata")) as IMetadataPiniaStorageSchema;
+  const configStore = (await sendMessage("getExtStorage", "config")) as IConfigPiniaStorageSchema;
+
+  const targetSites = configStore.crossSeedControl?.targetSites || [];
+  const iyuuToken = configStore.crossSeedControl?.iyuuToken;
+
+  const allResults: any[] = [];
+
+  // --- IYUU API 查重逻辑 ---
+  if (iyuuToken && metadata.infoHash) {
+    logger({ msg: `Querying IYUU API for InfoHash: ${metadata.infoHash}` });
+    try {
+      const iyuuRes = await fetch(
+        `https://api.iyuu.cn/index.php?m=App&c=Api&a=hash&hash=${metadata.infoHash}&sign=${iyuuToken}&version=PT-reseed`,
+      );
+      const iyuuData = await iyuuRes.json();
+
+      if (iyuuData && iyuuData.ret === 200 && iyuuData.data) {
+        const iyuuMatches = iyuuData.data;
+        // IYUU 返回的结构可能是一个数组或者对象，需适配
+        const matchArray = Array.isArray(iyuuMatches) ? iyuuMatches : Object.values(iyuuMatches);
+
+        for (const match of matchArray as any[]) {
+          const siteId = match.site || match.sid; // IYUU字段可能叫 site 或 sid
+          const torrentId = match.id || match.torrent_id;
+
+          if (siteId && torrentId && metadataStore.sites[siteId] && metadataStore.sites[siteId].enabled) {
+            // 排除来源站和非目标站
+            if (metadata.originSite && siteId === metadata.originSite) continue;
+            if (targetSites.length > 0 && !targetSites.includes(siteId as any)) continue;
+
+            allResults.push({
+              id: torrentId,
+              site: siteId,
+              title: `[IYUU Match] ${metadata.name}`,
+              subTitle: "Discovered via IYUU Global Database",
+              size: metadata.totalSize,
+              matchLevel: "L3", // IYUU 基于 Hash 匹配，可认为是极高信任度
+            });
+          }
+        }
+        logger({ msg: `IYUU API returned ${allResults.length} potential matches.` });
+
+        // 如果 IYUU 找到了结果，可以选择跳过常规的按标题全站搜索，节省大量 API 请求
+        if (allResults.length > 0) {
+          return allResults;
+        }
+      }
+    } catch (e) {
+      logger({ msg: "IYUU API Query Failed", data: e });
+    }
+  }
+  // --- 常规全站爬虫查重逻辑 ---
+
   const sites = Object.entries(metadataStore.sites).filter(([id, config]) => {
     // 过滤掉来源站点
     if (metadata.originSite && id === metadata.originSite) {
       return false;
     }
+    // 过滤用户指定的目标站点
+    if (targetSites.length > 0 && !targetSites.includes(id as any)) {
+      return false;
+    }
     return config.enabled;
   });
-
-  const allResults: any[] = [];
 
   for (const [siteId] of sites) {
     try {

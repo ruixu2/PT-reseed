@@ -104,6 +104,15 @@ onMessage("getDownloaderTorrentFiles", async ({ data: { downloaderId, torrentId 
   return [];
 });
 
+onMessage("resumeDownloaderTorrent", async ({ data: { downloaderId, torrentId } }) => {
+  const downloaderConfig = await getDownloaderConfig(downloaderId);
+  if (downloaderConfig.id) {
+    const downloaderInstance = await getDownloader(downloaderConfig);
+    return await downloaderInstance.resumeTorrent(torrentId);
+  }
+  return false;
+});
+
 export async function getTorrentDownloadLink(torrent: ITorrent) {
   const site = await getSiteInstance<"public">(torrent.site);
   return await site.getTorrentDownloadLink(torrent);

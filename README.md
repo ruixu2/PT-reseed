@@ -7,13 +7,12 @@
     <a href="../../releases" title="GitHub Download"><img src="https://img.shields.io/github/downloads/pt-plugins/PT-reseed/total.svg?label=Downloads"></a>
     <img src="https://img.shields.io/badge/Used-TypeScript%20Vue-blue.svg">
     <a href="./LICENSE" title="GitHub license"><img src="https://img.shields.io/github/license/pt-plugins/PT-reseed.svg?label=License" alt="GitHub license"/></a>
-    <a href="https://t.me/joinchat/NZ9NCxPKXyby8f35rn_QTw"><img src="https://img.shields.io/badge/Telegram-Chat-blue.svg?logo=telegram" alt="Telegram"/></a>
     <a href="https://deepwiki.com/pt-plugins/PT-reseed"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/></a>
 </p>
 
 ### 🚀 关于 Introduction
 
-PT-reseed（曾用名 PT-depiler）是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) 基础上，
+PT-reseed 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) 基础上，
 基于浏览器最新的 [Manifest v3](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3) 标准开发的一款浏览器插件（Web Extensions），
 一个可以提升 PT 站点使用效率的工具。
 
@@ -37,17 +36,7 @@ PT-reseed（曾用名 PT-depiler）是在原 [PT-Plugin-Plus](https://github.com
 
 ### 🔧 安装 Installation
 
-#### 1. 从各个浏览器的扩展商店安装
-
-在各主流浏览器的扩展商店中均已上架 PT-Depiler，您可以直接前往对应的扩展商店搜索 "PT-Depiler" 进行安装，或点击表格状态列的徽标图片直接跳转到对应的扩展商店页面进行安装。
-
-|          浏览器           | 状态                                                                                                                                                                                                                                                                                                                                |
-|:----------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|    Chrome Web Store    | [![Google Chrome](https://img.shields.io/chrome-web-store/v/iloddidemhbedaopmipajgclofjocogb.svg?label=Google%20Chrome)](https://chromewebstore.google.com/detail/pt-reseed/iloddidemhbedaopmipajgclofjocogb)                                                                                                                    | 
-|    Firefox Add-ons     | [![Mozilla Firefox](https://img.shields.io/amo/v/pt-reseed.svg?label=Mozilla%20Firefox)](https://addons.mozilla.org/zh-CN/firefox/addon/pt-reseed/)                                                                                                                                                                             | 
-| Microsoft Edge Add-ons | [![Microsoft Edge](https://img.shields.io/badge/dynamic/json?label=Edge%20Addons&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2FAddons%2Fgetproductdetailsbycrxid%2Fkbijhmckhndmeckonoikakdfdlbnlkde)](https://microsoftedge.microsoft.com/addons/detail/pt-reseed/kbijhmckhndmeckonoikakdfdlbnlkde) |
-
-#### 2. 从 Github Action 或者 Release 中获取并安装
+#### 1. 从 Github Action 或者 Release 中获取并安装
 
 [![Build Action Release](../../actions/workflows/action_build.yml/badge.svg)](../../actions/workflows/action_build.yml)
 
@@ -69,16 +58,16 @@ pnpm build:dist    # or pnpm build:dist-firefox
 
 ### 📝 改动说明 Changelog
 
-PT-Depiler 并不是对 PT-Plugin-Plus 的简单移植，而是对其进行了全面的重构和改进，以获得更好的使用体验。
+PT-reseed 并不是对 PT-Plugin-Plus 的简单移植，而是对其进行了全面的重构和改进，以获得更好的使用体验。
 
-> 目前， PT-Depiler 仅支持**已适配站点**的PTPP历史用户数据迁移。
-> 请勿将 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) 或者 [PT 助手](https://github.com/ronggang/PT-Plugin) 的配置文件直接导入 PT-Depiler。
+> 目前，PT-reseed 仅支持**已适配站点**的PTPP历史用户数据迁移。
+> 请勿将 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) 或者 [PT 助手](https://github.com/ronggang/PT-Plugin) 的配置文件直接导入 PT-reseed。
 
 更新记录请见： [CHANGELOG.md](./CHANGELOG.md)
 
 ### 💁‍♂️ 贡献 Contributors
 
-✨ 欢迎 Star & 提 Issue，共同完善 PT-Depiler！ 有兴趣贡献的开发者请阅读[行为准则](./CODE_OF_CONDUCT.md)
+✨ 欢迎 Star & 提 Issue，共同完善 PT-reseed！ 有兴趣贡献的开发者请阅读[行为准则](./CODE_OF_CONDUCT.md)
 
 > 请不要在 Issue 中提出一般性问题。Issue 仅用于报告错误、提出改进建议或请求新功能。
 
@@ -88,7 +77,7 @@ PT-Depiler 并不是对 PT-Plugin-Plus 的简单移植，而是对其进行了�
 
 ### 📝 许可证 License
 
-PT-Depiler 是一个开源项目，遵循 [MIT 许可证](http://opensource.org/licenses/MIT)
+PT-reseed 是一个开源项目，遵循 [MIT 许可证](http://opensource.org/licenses/MIT)
 
 Copyright (c) 2020-present [pt-plugins](https://github.com/pt-plugins)
 

@@ -11,7 +11,7 @@ import { REPO_URL } from "~/helper.ts";
 const { t } = useI18n();
 
 const ptppHistory = [
-  { name: "PT Depiler", time: "2020-10-25", link: REPO_URL, color: "info" },
+  { name: "PT-reseed", time: "2020-10-25", link: REPO_URL, color: "info" },
   { name: "PT Plugin Plus", time: "2018-12-16", link: "https://github.com/ronggang/PT-Plugin-Plus" },
   { name: "PT Plugin （Rhilip修改版）", time: "2018-04-18", link: "https://github.com/Rhilip/PT-Plugin" },
   { name: "PT Plugin", time: "2014-10-10", link: "https://github.com/ronggang/PT-Plugin" },

@@ -50,18 +50,34 @@ async function quickCrossSeed(torrent: any) {
   const source = props.sourceTorrent;
   if (!targetDownloaderId.value) return;
 
+  const targetPath = applyPathMapping(
+    source.savePath,
+    source.clientId,
+    targetDownloaderId.value,
+    configStore.crossSeedControl.pathMappings || [],
+  );
+
   loading.value[torrent.id] = true;
   try {
     const result: any = await sendMessage("downloadTorrent", {
       torrent,
       downloaderId: targetDownloaderId.value,
       options: {
-        savePath: source.savePath,
+        savePath: targetPath,
         addAtPaused: true,
       },
     });
     if (result.success) {
       runtimeStore.showSnakebar(t("CrossSeed.sendSuccess"), { color: "success" });
+      if (source.infoHash && torrent.site && torrent.id) {
+        await sendMessage("markReseedResultInjected", {
+          sourceInfoHash: source.infoHash,
+          siteId: torrent.site,
+          torrentId: torrent.id,
+          targetClientId: targetDownloaderId.value,
+          targetTorrentHash: result.id,
+        });
+      }
     } else {
       runtimeStore.showSnakebar(t("CrossSeed.sendError"), { color: "error" });
     }

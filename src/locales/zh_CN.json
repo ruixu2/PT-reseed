@@ -147,6 +147,7 @@
       "SearchEntity": "搜索结果",
       "SearchResultSnapshot": "搜索结果快照",
       "CrossSeed": "辅种与查重",
+      "LocalSeedingDashboard": "做种统计",
       "default": "概览"
     },
     "Settings": {
@@ -273,7 +274,11 @@
       "L1": "完全匹配",
       "L1_desc": "文件大小和结构完全一致，可直接辅种。",
       "L2": "模糊匹配",
-      "L2_desc": "主视频文件大小一致，但微小文件（如NFO/图）可能不同。辅种时请在下载器中忽略差异文件。"
+      "L2_desc": "主视频文件大小一致，但微小文件（如NFO/图）可能不同。辅种时请在下载器中忽略差异文件。",
+      "L2.5": "结构严格匹配",
+      "L2.5_desc": "通过远端种子解析，文件结构和各子文件大小严格一致，极高概率可辅种。",
+      "L3": "物理哈希匹配",
+      "L3_desc": "在后台下载了双端种子进行分片(Pieces)级别的物理对比，100% 同源，无风险辅种。"
     },
     "localMatch": "本地已存",
     "quickCrossSeed": "一键辅种",
@@ -281,7 +286,8 @@
     "selectTargetClient": "选择目标下载器",
     "tabs": {
       "analysis": "资源分析",
-      "queue": "自动化队列"
+      "queue": "自动化队列",
+      "statistics": "辅种报表"
     },
     "addToQueue": "加入自动化队列",
     "addQueueSuccess": "成功将 {count} 个资源加入队列",
@@ -296,7 +302,57 @@
       "no_match": "未找到匹配",
       "error": "失败",
       "completed": "已完成"
+    },
+    "staging": {
+      "title": "待审核列表",
+      "intro": "以下资源是自动化辅种后台自动匹配到的候选项。请逐一审核后确认注入下载器，或忽略不符合要求的项目。",
+      "noPendingItems": "暂无可审项目，自动化辅种后台匹配到的资源将显示在此处。",
+      "approveSelected": "审核通过并注入",
+      "ignoreSelected": "忽略所选",
+      "approveAll": "全部通过并注入",
+      "batchApproved": "成功审核通过 {count} 个资源并注入下载器",
+      "batchApprovedError": "批量审核注入失败",
+      "batchIgnored": "已忽略 {count} 个资源",
+      "batchIgnoredError": "批量忽略失败",
+      "singleApproved": "已将该资源推送到下载器",
+      "singleApprovedError": "推送失败",
+      "singleIgnored": "已忽略该资源",
+      "singleIgnoredError": "忽略操作失败",
+      "reviewConfirm": "确认将选中的 {count} 个资源注入下载器？",
+      "ignoreConfirm": "确认忽略选中的 {count} 个资源？",
+      "colSite": "匹配站点",
+      "colTitle": "种子标题",
+      "colSize": "大小",
+      "colMatchLevel": "匹配级别",
+      "colAction": "操作",
+      "sourceInfo": "来源种子",
+      "matchedCount": "匹配资源数",
+      "targetDownloader": "目标下载器",
+      "noResultsForTask": "检索结果为空"
+    },
+    "stats": {
+      "totalMetadata": "已缓存本地资源",
+      "duplicateGroups": "本地重复资源组",
+      "totalTasks": "后台查重总任务",
+      "totalInjected": "成功跨站辅种数",
+      "taskStatus": "自动查重任务状态分布",
+      "siteDistribution": "跨站匹配资源站点分布",
+      "matchCount": "匹配数量"
     }
+  },
+  "LocalSeedingDashboard": {
+    "totalSeeds": "做种总数",
+    "ptSeeds": "PT 种子",
+    "btSeeds": "BT 种子",
+    "totalSize": "做种总体积",
+    "totalUploaded": "总上传贡献",
+    "averageRatio": "平均分享率",
+    "errorSeeds": "异常/报错种子",
+    "noData": "暂无做种数据，请确认下载器已配置并正在运行",
+    "clientDist": "客户端负载分布",
+    "siteDist": "站点保种分布 (Top 15)",
+    "seedCount": "保种数量",
+    "topHugeSeeds": "硬盘杀手榜 (Top 10 大体积资源)"
   },
   "KeepUploadTask": {
     "title": "辅种任务",
@@ -638,7 +694,35 @@
       "user-info": "用户信息",
       "backup": "备份恢复",
       "social-information": "媒体评分",
-      "native-bridge": "原生通信桥"
+      "native-bridge": "原生通信桥",
+      "cross-seed": "自动化辅种"
+    },
+    "CrossSeedWindow": {
+      "intro": "配置后台运行器（Reseed Runner）的自动化辅种行为。自动化任务会在后台静默扫描本地种子，并在其他 PT 站寻找可辅种资源。",
+      "scheduleTitle": "定时调度",
+      "autoScanInterval": "自动扫描频率",
+      "intervalDisabled": "禁用自动扫描（仅手动触发）",
+      "intervalHours": "每 {hours} 小时",
+      "iyuuTitle": "IYUU 全局数据库",
+      "iyuuDesc": "填写您的 IYUU 合作者 Token。配置后，系统在查找可辅种资源时，将首先通过 IYUU 数据库使用 InfoHash 瞬间在全网查询，极大地提升查重速度并节省各站点的 API 请求配额。",
+      "iyuuToken": "IYUU Token",
+      "targetSitesTitle": "目标站点",
+      "targetSitesDesc": "选择后台自动化搜索时请求的站点。如果留空，则搜索所有已启用的 PT 站。",
+      "targetSites": "参与自动搜索的站点",
+      "pathMappingTitle": "智能路径映射",
+      "pathMappingDesc": "当进行跨客户端辅种时（如从本机 qBittorrent 辅到 NAS 里的 Transmission），如果两端的保存路径不同，可以在此配置替换规则（支持正则）。",
+      "fromClient": "来源下载器",
+      "toClient": "目标下载器",
+      "searchPath": "搜索内容/正则",
+      "replacePath": "替换为",
+      "addMapping": "添加映射规则",
+      "automationTitle": "自动化动作",
+      "autoInject": "匹配成功后自动静默注入下载器",
+      "autoInjectDesc": "如果开启，当后台发现 L1（完全匹配）级别资源时，不再需要人工审核，直接推送到原始下载器的同一路径并设为暂停校验。",
+      "safeInjectOnly": "站点规则保护 (防 H&R)",
+      "safeInjectOnlyDesc": "建议开启。自动注入前会检测目标种子的标签，如果带有 H&R（Hit and Run）或惩罚性质的标签，将拒绝自动注入并转为待审核状态，防止账号被警告。",
+      "autoResume": "校验完成后自动恢复(Resume)做种",
+      "autoResumeDesc": "如果开启，后台会定时监控新注入的种子，一旦其校验进度达到 100% 且无错误，系统将自动使其开始做种，实现全自动闭环。"
     },
     "ui": {
       "changeLanguage": "切换语言",
@@ -721,38 +805,6 @@
       "userDataRefresh": "用户数据刷新",
       "afterTime": "每日最早刷新时间",
       "userInfoDisplay": "用户信息展示"
-    }
-  },
-  "SetNativeBridge": {
-    "permission": {
-      "title": "权限",
-      "granted": "已授权",
-      "notGranted": "未授权",
-      "grant": "授予权限",
-      "revoke": "撤销权限",
-      "grantFailed": "权限请求被拒绝"
-    },
-    "bridge": {
-      "title": "通信桥控制",
-      "enabled": "启用原生通信桥",
-      "testConnection": "测试连接",
-      "status": {
-        "no-permission": "未授权",
-        "disabled": "已禁用",
-        "connecting": "连接中...",
-        "connected": "已连接",
-        "retrying": "重试中...",
-        "error": "错误"
-      }
-    },
-    "info": {
-      "title": "关于原生通信桥",
-      "description": "原生通信桥允许 PT-reseed CLI 工具与本扩展进行通信。需要在电脑上单独安装 CLI 工具。",
-      "cliRequired": "此功能需要安装外部 CLI 工具。移动平台上不可用。安装说明请参考 {0}。",
-      "cliLink": "ptd-cli",
-      "setupCommand": "运行以下命令将此扩展注册到 CLI 工具：",
-      "setupHint": "运行命令后，重启浏览器或点击测试连接。",
-      "privacy": "启用后，原生通信桥允许本地安装的 CLI 工具访问扩展数据，包括站点配置、搜索结果、下载历史、用户信息和下载器状态。所有通信均在本地进行（浏览器与本机进程之间），不会将数据发送至任何远程服务器。您可以随时禁用此功能或撤销权限。"
     }
   },
   "SetDownloader": {

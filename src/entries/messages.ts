@@ -41,6 +41,7 @@ import {
   IKeepUploadTask,
   TKeepUploadTaskKey,
   BridgeStatus,
+  IReseedResult,
 } from "@/shared/types.ts";
 
 import { isDebug } from "~/helper.ts";
@@ -151,10 +152,18 @@ interface ProtocolMap extends TMessageMap {
   getSiteList(): Array<{ id: string; name: string; url: string; offline: boolean }>;
   getDownloaderList(): Array<{ id: string; name: string; type: string; enabled: boolean; address: string }>;
 
-  // 2.9 Native messaging bridge control
-  nativeBridgeGetStatus(): BridgeStatus;
-  nativeBridgeSetEnabled(data: boolean): BridgeStatus;
-  nativeBridgeReconnect(): BridgeStatus;
+  // 2.9 Staging area for reseed review
+  getPendingReseedResults(): IReseedResult[];
+  markReseedResultStatus(data: {
+    sourceInfoHash: string;
+    siteId: string;
+    torrentId: string;
+    status: IReseedResult["status"];
+  }): void;
+  batchMarkReseedResultsStatus(data: {
+    items: Array<{ sourceInfoHash: string; siteId: string; torrentId: string }>;
+    status: IReseedResult["status"];
+  }): void;
 }
 
 // 全局消息处理函数映射

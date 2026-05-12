@@ -246,4 +246,19 @@ export interface IConfigPiniaStorageSchema {
     triggerThreshold: number; // 触发阈值（周），默认 2
     extensionDuration: number; // 延长时长（月），默认 3
   };
+
+  crossSeedControl: {
+    autoScanInterval: number; // 自动扫描的时间间隔（小时），0 表示关闭自动扫描
+    autoInject: boolean; // 是否自动将 L1 匹配项静默注入下载器
+    safeInjectOnly: boolean; // 站点保护：如果种子带有 H&R 等惩罚标签，拒绝自动注入
+    autoResume: boolean; // 是否在自动注入且校验达到 100% 后自动开始做种
+    iyuuToken: string; // IYUU API Token，用于快速全网查重
+    targetSites: TSiteID[]; // 参与自动搜索的目标 PT 站点，为空则搜索所有可用站点
+    pathMappings: Array<{
+      fromClient: string;
+      toClient: string;
+      search: string;
+      replace: string;
+    }>; // 智能路径映射规则
+  };
 }

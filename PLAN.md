@@ -19,9 +19,10 @@ Inspired by the efficiency of "Reseed Puppy", this phase focuses on reducing use
 - [ ] **Automated Reseed Queue (The Runner)**: 
   - Allow users to select multiple finished torrents to enqueue for background cross-seeding.
   - Implement a background task manager with intelligent rate limiting to respect tracker API limits and prevent account bans.
-- [ ] **Advanced Matching Logic (L2 & L3)**:
-  - **L2 (Fuzzy Match)**: Support matching when the main video file is identical, but minor files (NFOs, samples) differ.
-  - **L3 (Deep Scan)**: Fetch the `.torrent` file from the target site and compare piece hashes before injecting into the downloader.
+- [x] **Advanced Matching Logic (L2 & L3)**:
+  - [x] **L2 (Fuzzy Match)**: Support matching when the main video file is identical, but minor files (NFOs, samples) differ.
+  - [x] **L3 (Deep Scan)**: Fetch the `.torrent` file from the target site and compare piece hashes before injecting into the downloader.
+
 - [ ] **Staging Area UI**: 
   - Instead of direct injection, auto-matched torrents land in a "Pending Review" list for batch approval, preventing unintended data corruption.
 

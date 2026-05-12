@@ -32,7 +32,7 @@ async function updatePerSiteData(siteId: TSiteID, siteUserInfoData: IUserInfo) {
     site: siteId,
     siteUserConfig: metadataStore.sites[siteId],
     siteName: siteMeta.combinedSiteName,
-    // 对 isDead 或者 isOffline 的站点不允许选择（ https://github.com/pt-plugins/PT-depiler/pull/140 ）
+    // 对 isDead 或者 isOffline 的站点不允许选择
     selectable: !(siteMeta.isDead || siteMeta.isOffline),
 
     // 预先计算 多少天未访问站点，以防止在 template 中反复计算

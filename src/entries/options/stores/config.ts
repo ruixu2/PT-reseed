@@ -294,6 +294,16 @@ export const useConfigStore = defineStore("config", {
       triggerThreshold: 2,
       extensionDuration: 3,
     },
+
+    crossSeedControl: {
+      autoScanInterval: 0,
+      autoInject: false,
+      safeInjectOnly: true,
+      autoResume: false,
+      iyuuToken: "",
+      targetSites: [],
+      pathMappings: [],
+    },
   }),
   getters: {
     uiTheme(): Exclude<supportThemeType, "auto"> {

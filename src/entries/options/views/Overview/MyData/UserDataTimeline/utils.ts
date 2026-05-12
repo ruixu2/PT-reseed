@@ -190,7 +190,7 @@ export const timelineDataRef = useResetableRef<ITimelineData>(
         for (const userInfoField of CTimelineUserInfoField) {
           const userInfoKey = userInfoField.name as ITimelineUserInfoField["name"];
           if (userInfo[userInfoKey] && userInfo[userInfoKey] > 0) {
-            // refs: https://github.com/pt-plugins/PT-depiler/issues/48
+            // refs: https://github.com/pt-plugins/PT-reseed/issues/48
             let value = 0;
             try {
               value = parseFloat(userInfo[userInfoKey]);
