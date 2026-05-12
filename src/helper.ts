@@ -1,7 +1,7 @@
 // 此处放置一些全局都可以用的助手函数、常量定义
 
 // 仓库相关
-export const REPO_NAME = "pt-plugins/PT-depiler";
+export const REPO_NAME = "pt-plugins/PT-reseed";
 export const REPO_URL = `https://github.com/${REPO_NAME}`;
 export const REPO_API = `https://api.github.com/repos/${REPO_NAME}`;
 

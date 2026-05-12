@@ -7,6 +7,7 @@ import type { DataTableHeader } from "vuetify";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
+import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
 import type { TDownloaderKey } from "@/shared/types.ts";
 import { getDownloaderIcon, getDownloaderMetaData, type TorrentClientMetaData } from "@ptd/downloader";
@@ -100,6 +101,29 @@ function deleteDownloader(downloaderId: TDownloaderKey[]) {
 async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
   return await metadataStore.removeDownloader(downloaderId);
 }
+
+const testingStatus = ref<Record<string, "testing" | "success" | "error">>({});
+async function testDownloaderConnection(downloaderId: string) {
+  testingStatus.value[downloaderId] = "testing";
+  try {
+    const success = (await sendMessage("pingDownloader", downloaderId)) as boolean;
+    testingStatus.value[downloaderId] = success ? "success" : "error";
+    if (success) {
+      runtimeStore.showSnakebar(t("connectCheck.success"), { color: "success" });
+    } else {
+      runtimeStore.showSnakebar(t("connectCheck.error"), { color: "error" });
+    }
+  } catch (e) {
+    testingStatus.value[downloaderId] = "error";
+    runtimeStore.showSnakebar(t("connectCheck.error"), { color: "error" });
+  } finally {
+    setTimeout(() => {
+      delete testingStatus.value[downloaderId];
+    }, 5000);
+  }
+}
+
+const runtimeStore = useRuntimeStore();
 </script>
 
 <template>
@@ -259,10 +283,20 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
       <template #item.action="{ item }">
         <v-btn-group class="table-action" density="compact" variant="plain">
           <v-btn
-            :disabled="true"
+            :loading="testingStatus[item.id] === 'testing'"
+            :color="
+              testingStatus[item.id] === 'success' ? 'success' : testingStatus[item.id] === 'error' ? 'error' : ''
+            "
             :title="t('SetDownloader.index.table.action.status')"
-            icon="mdi-information-outline"
+            :icon="
+              testingStatus[item.id] === 'success'
+                ? 'mdi-check-circle'
+                : testingStatus[item.id] === 'error'
+                  ? 'mdi-alert-circle'
+                  : 'mdi-link-variant'
+            "
             size="small"
+            @click="testDownloaderConnection(item.id)"
           />
 
           <v-btn

@@ -1,33 +1,35 @@
 /**
- * 使用 ws + rpc-secret 形式访问，
- * 原因在于如果发送metadata的话，使用 http 会空返回，
- * 但是允许用户填入 http:// 开头的地址
+ * @see https://aria2.github.io/manual/en/html/aria2c.html#json-rpc-interface
  */
 import {
+  AbstractBittorrentClient,
   CAddTorrentOptions,
   CustomPathDescription,
   CTorrent,
-  DownloaderBaseConfig,
+  TorrentClientConfig,
   TorrentClientMetaData,
+  CTorrentFilterRules,
   CTorrentState,
-  TorrentClientStatus,
-  AbstractBittorrentClient,
   CAddTorrentResult,
 } from "../types";
-import { getRemoteTorrentFile } from "../utils";
 import urlJoin from "url-join";
+import axios from "axios";
+import { getRemoteTorrentFile } from "../utils";
+import { nanoid } from "nanoid";
 
-export const clientConfig: DownloaderBaseConfig = {
+export const clientConfig: TorrentClientConfig = {
   type: "Aria2",
   name: "Aria2",
   address: "http://localhost:6800/jsonrpc",
+  username: "",
   password: "",
   timeout: 60 * 1e3,
 };
 
+// noinspection JSUnusedGlobalSymbols
 export const clientMetaData: TorrentClientMetaData = {
-  description: "Aria2是一款自由、跨平台命令行界面的下载管理器",
-  warning: ["使用 WebSocket + `rpc-secret` 形式连接，请设置好 `rpc-secret` 配置项", "不支持使用用户名+密码的认证方式"],
+  description: "aria2 是一个轻量级、多协议和多源的命令行下载实用程序。",
+  warning: ["Aria2 不支持删除种子时同时删除数据"],
   feature: {
     CustomPath: {
       allowed: true,
@@ -39,263 +41,151 @@ export const clientMetaData: TorrentClientMetaData = {
   },
 };
 
-type METHODS =
-  | "aria2.addUri"
-  | "aria2.addTorrent"
-  | "aria2.getPeers"
-  | "aria2.addMetalink"
-  | "aria2.remove"
-  | "aria2.pause"
-  | "aria2.forcePause"
-  | "aria2.pauseAll"
-  | "aria2.forcePauseAll"
-  | "aria2.unpause"
-  | "aria2.unpauseAll"
-  | "aria2.forceRemove"
-  | "aria2.changePosition"
-  | "aria2.tellStatus"
-  | "aria2.getUris"
-  | "aria2.getFiles"
-  | "aria2.getServers"
-  | "aria2.tellActive"
-  | "aria2.tellWaiting"
-  | "aria2.tellStopped"
-  | "aria2.getOption"
-  | "aria2.changeUri"
-  | "aria2.changeOption"
-  | "aria2.getGlobalOption"
-  | "aria2.changeGlobalOption"
-  | "aria2.purgeDownloadResult"
-  | "aria2.removeDownloadResult"
-  | "aria2.getVersion"
-  | "aria2.getSessionInfo"
-  | "aria2.shutdown"
-  | "aria2.forceShutdown"
-  | "aria2.getGlobalStat"
-  | "aria2.saveSession"
-  | "system.multicall"
-  | "system.listMethods"
-  | "system.listNotifications";
-
-type multiCallParams = {
-  methodName: METHODS;
-  params: any[];
-}[];
-
-interface jsonRPCResponse<Data> {
-  id: string;
-  jsonrpc: "2.0";
-  result: Data;
-  error?: { code: number; message: string };
-}
-
 interface rawTask {
-  bitfield: string;
-  completedLength: number;
-  connections: `${1 | 0}`;
-  dir: string;
-  downloadSpeed: number;
-  files: {
-    completedLength: number;
-    index: number;
-    length: number;
-    path: string;
-    selected: string;
-    uris: {
-      status: string;
-      url: string;
-    }[];
-  }[];
   gid: string;
-  numPieces: number;
-  pieceLength: number;
-  status:
-    | "active" // active for currently downloading/seeding downloads.
-    | "waiting" // waiting for downloads in the queue; download is not started.
-    | "paused" // paused for paused downloads.
-    | "error" // error for downloads that were stopped because of error.
-    | "complete" // complete for stopped and completed downloads.
-    | "removed"; // removed for the downloads removed by user.
+  status: "active" | "waiting" | "paused" | "error" | "complete" | "removed";
   totalLength: number;
+  completedLength: number;
   uploadLength: number;
+  bitfield: string;
+  downloadSpeed: number;
   uploadSpeed: number;
-
-  // If it is a bittorrent
+  infoHash?: string;
+  numSeeders?: number;
+  seeder?: "true" | "false";
+  connections: number;
+  errorCode?: string;
+  errorMessage?: string;
+  followedBy?: string[];
+  following?: string;
+  belongsTo?: string;
+  dir: string;
+  files: Array<{
+    index: string;
+    path: string;
+    length: number;
+    completedLength: number;
+    selected: "true" | "false";
+    uris: Array<{ uri: string; status: "used" | "waiting" }>;
+  }>;
   bittorrent?: {
     announceList: string[][];
     comment: string;
     creationDate: number;
+    mode: "single" | "multi";
     info: {
       name: string;
     };
-    mode: "single" | "multi";
   };
-  infoHash?: string;
-  seeder?: string;
-  numSeeders?: number;
 }
 
-export default class Aria2 extends AbstractBittorrentClient {
+// noinspection JSUnusedGlobalSymbols
+export default class Aria2 extends AbstractBittorrentClient<TorrentClientConfig> {
   readonly version = "v0.1.0";
 
-  private _wsClient: WebSocket;
-  private _msgId = 0;
-
-  get msgId() {
-    return this._msgId++;
-  }
-
-  constructor(options: Partial<DownloaderBaseConfig>) {
+  constructor(options: Partial<TorrentClientConfig> = {}) {
     super({ ...clientConfig, ...options });
-
-    // 修正服务器地址
-    let address = this.config.address;
-    if (address.indexOf("jsonrpc") === -1) {
-      address = urlJoin(address, "/jsonrpc");
-    }
-    this.config.address = address;
-
-    // https -> wss , http -> ws
-    this._wsClient = new WebSocket(address.replace(/^http/, "ws"));
-  }
-
-  private async methodSend<T>(methodName: METHODS, params: any[] = []): Promise<jsonRPCResponse<T>> {
-    return new Promise((resolve, reject) => {
-      let postParams;
-      if (methodName === "system.multicall") {
-        (params as multiCallParams).forEach((x) => {
-          x.params = [`token:${this.config.password}`, ...x.params];
-        });
-
-        postParams = [params];
-      } else {
-        postParams = [`token:${this.config.password}`, ...params];
-      }
-
-      const msgId = String(this.msgId);
-
-      this._wsClient.addEventListener("message", (event) => {
-        const data: jsonRPCResponse<T> = JSON.parse(event.data);
-        if (data.id === msgId) {
-          // 保证消息一致性
-          resolve(data);
-        } else if (data.error) {
-          reject(new Error(data.error?.message || "WS ERROR"));
-        }
-      });
-
-      this._wsClient.send(
-        JSON.stringify({
-          method: methodName,
-          id: msgId,
-          params: postParams,
-        }),
-      );
-    });
   }
 
   async ping(): Promise<boolean> {
     try {
-      const { result: pingData } = await this.methodSend<{
-        version: string;
-        enabledFeatures: string[];
-      }>("aria2.getVersion");
-      return pingData.version.includes(".");
+      const {
+        data: { result: version },
+      } = await this.methodSend<{ version: string }>("aria2.getVersion");
+      return !!version;
     } catch (e) {
       return false;
     }
   }
 
   protected async getClientVersionFromRemote(): Promise<string> {
-    const { result: versionData } = await this.methodSend<{
-      version: string;
-      enabledFeatures: string[];
-    }>("aria2.getVersion");
-    return versionData.version;
+    const {
+      data: { result: version },
+    } = await this.methodSend<{ version: string; enabledFeatures: string[] }>("aria2.getVersion");
+    return `${version.version} (${version.enabledFeatures.join(", ")})`;
   }
 
-  // Aria2 只能知道当前的传输速度，其他都不知道
-  override async getClientStatus(): Promise<TorrentClientStatus> {
-    const { result: statusData } = await this.methodSend<{
-      downloadSpeed: string;
-      uploadSpeed: string;
-    }>("aria2.getGlobalStat");
-    return {
-      dlSpeed: Number(statusData.downloadSpeed),
-      upSpeed: Number(statusData.uploadSpeed),
-    };
+  override async getClientFreeSpace(): Promise<number | "N/A"> {
+    return "N/A";
+  }
+
+  private async methodSend<T>(method: string, params: any[] = []): Promise<{ result: T }> {
+    return (
+      await axios.post(
+        this.config.address,
+        {
+          jsonrpc: "2.0",
+          method: method,
+          params: [`token:${this.config.password}`, ...params],
+          id: nanoid(),
+        },
+        {
+          timeout: this.config.timeout,
+        },
+      )
+    ).data;
   }
 
   async addTorrent(url: string, options: Partial<CAddTorrentOptions> = {}): Promise<CAddTorrentResult> {
     const addResult = { success: false } as CAddTorrentResult;
 
-    const addOption: any = { pause: options.addAtPaused ?? false };
+    const addTorrentOptions: any = {
+      paused: options.addAtPaused ? "true" : "false",
+    };
 
     if (options.savePath) {
-      addOption.dir = options.savePath;
+      addTorrentOptions.dir = options.savePath;
     }
 
-    let method: "aria2.addUri" | "aria2.addTorrent";
-    let params: any;
-    if (url.startsWith("magnet:") || !options.localDownload) {
-      // 链接 add_torrent_url
-      method = "aria2.addUri";
-      params = [[url], addOption];
-    } else {
-      // 文件 add_torrent_file
-      method = "aria2.addTorrent";
+    // Aria2 似乎并不直接在推送时支持标签（Category）
+    // 不过可以通过其通用配置项进行设置
 
-      const torrent = await getRemoteTorrentFile({
-        url,
-        ...(options.localDownloadOption ?? {}),
-      });
-
-      params = [torrent.metadata.base64(), [], addOption];
+    if (options.uploadSpeedLimit && options.uploadSpeedLimit > 0) {
+      addTorrentOptions["max-upload-limit"] = `${options.uploadSpeedLimit}M`;
     }
 
     try {
-      const gid = await this.methodSend<string>(method, params);
+      let aria2Gid: string;
+      if (url.startsWith("magnet:") || !options.localDownload) {
+        const { result: gid } = await this.methodSend<string>("aria2.addUri", [[url], addTorrentOptions]);
+        aria2Gid = gid;
+      } else {
+        const torrent = await getRemoteTorrentFile({
+          url,
+          ...(options.localDownloadOption || {}),
+        });
 
-      // 设置上传速度限制 - 必须在添加后使用 aria2.changeOption
-      if (options.uploadSpeedLimit && options.uploadSpeedLimit > 0) {
-        try {
-          await this.methodSend("aria2.changeOption", [
-            gid,
-            {
-              "max-upload-limit": `${options.uploadSpeedLimit * 1024}K`,
-            },
-          ]);
-        } catch (e) {}
+        const { result: gid } = await this.methodSend<string>("aria2.addTorrent", [
+          torrent.metadata.base64(),
+          [],
+          addTorrentOptions,
+        ]);
+        aria2Gid = gid;
       }
 
-      addResult.success = true;
-    } catch (e) {}
+      addResult.success = !!aria2Gid;
+      addResult.id = aria2Gid;
+    } catch (e) {
+      addResult.message = e;
+    }
 
     return addResult;
   }
 
-  async getAllTorrents(): Promise<CTorrent<rawTask>[]> {
-    const torrents: CTorrent[] = [];
-    const { result: tasks } = await this.methodSend<[[rawTask[]], [rawTask[]], [rawTask[]]]>("system.multicall", [
-      {
-        methodName: "aria2.tellActive",
-        params: [],
-      },
-      {
-        methodName: "aria2.tellWaiting",
-        params: [0, 1000],
-      },
-      {
-        methodName: "aria2.tellStopped",
-        params: [0, 1000],
-      },
-    ] as multiCallParams);
+  async getAllTorrents(): Promise<CTorrent[]> {
+    const methods: Array<[string, any[]]> = [
+      ["aria2.tellActive", []],
+      ["aria2.tellWaiting", [0, 1000]],
+      ["aria2.tellStopped", [0, 1000]],
+    ];
 
-    tasks.forEach((task) => {
-      task[0].forEach((rawTask) => {
-        // 注意，我们只筛选bittorrent种子，对于其他类型的task，我们不做筛选
-        if (rawTask.bittorrent) {
-          torrents.push(this.parseRawTorrent(rawTask));
+    const torrents: CTorrent[] = [];
+    const results = await Promise.all(methods.map(([method, params]) => this.methodSend<rawTask[]>(method, params)));
+
+    results.forEach((res) => {
+      res.result.forEach((task) => {
+        if (task.bittorrent) {
+          torrents.push(this.parseRawTorrent(task));
         }
       });
     });
@@ -317,6 +207,19 @@ export default class Aria2 extends AbstractBittorrentClient {
     await this.methodSend<string>("aria2.remove", [id]);
     await this.methodSend<"OK">("aria2.removeDownloadResult", [id]);
     return true;
+  }
+
+  public async getTorrentFiles(id: string): Promise<any[]> {
+    const { result: task } = await this.methodSend<rawTask>("aria2.tellStatus", [id]);
+    if (!task || !task.files) {
+      return [];
+    }
+
+    return task.files.map((file) => ({
+      name: file.path,
+      path: file.path,
+      length: file.length,
+    }));
   }
 
   async resumeTorrent(id: any): Promise<boolean> {

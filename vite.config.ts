@@ -75,7 +75,7 @@ export default defineConfig({
         name: "__MSG_extName__",
         description: "__MSG_extDesc__",
         default_locale: "en",
-        homepage_url: "https://github.com/pt-plugins/PT-depiler",
+        homepage_url: "https://github.com/pt-plugins/PT-reseed",
         icons: {
           "16": "icons/logo/16.png",
           "19": "icons/logo/19.png",
@@ -128,7 +128,7 @@ export default defineConfig({
 
         "{{firefox}}.browser_specific_settings": {
           gecko: {
-            id: "ptdepiler.ptplugins@gmail.com",
+            id: "ptreseed.ptplugins@gmail.com",
             strict_min_version: "121.0",
           },
         },
@@ -138,7 +138,7 @@ export default defineConfig({
 
         web_accessible_resources: [
           {
-            resources: ["icons/*", "lib/*", "pt-depiler.css"],
+            resources: ["icons/*", "lib/*", "pt-reseed.css"],
             matches: ["*://*/*"],
           },
         ],

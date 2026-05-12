@@ -10,6 +10,7 @@ import type { ISocialInformation, TSupportSocialSite } from "@ptd/social/types.t
 
 import { useConfigStore } from "@/options/stores/config.ts";
 import { sendMessage } from "@/messages.ts";
+import { onMounted, ref, watch } from "vue";
 
 const { item, showSocial = true } = defineProps<{
   item: Partial<ITorrent>;
@@ -19,6 +20,34 @@ const { item, showSocial = true } = defineProps<{
 const { t } = useI18n();
 const router = useRouter();
 const configStore = useConfigStore();
+
+const localMatches = ref<any[]>([]);
+const isCheckingMatch = ref(false);
+
+async function checkLocalMatch() {
+  if (!item.size || isCheckingMatch.value) return;
+  isCheckingMatch.value = true;
+  try {
+    const matches = (await sendMessage("findLocalTorrentBySize", item.size)) as any[];
+    localMatches.value = matches.map((m) => {
+      const sizeDiff = Math.abs(m.totalSize - item.size!);
+      return {
+        ...m,
+        matchLevel: sizeDiff < 1024 ? "L1" : "L2",
+      };
+    });
+  } catch (e) {
+    console.error("Check local match failed:", e);
+  } finally {
+    isCheckingMatch.value = false;
+  }
+}
+
+onMounted(() => {
+  checkLocalMatch();
+});
+
+watch(() => item.size, checkLocalMatch);
 
 const { width: containerWidth } = useElementSize(useTemplateRef<HTMLDivElement>("container"));
 const { width: tagsWidth } = useElementSize(useTemplateRef<HTMLDivElement>("tags"));
@@ -156,6 +185,31 @@ function doAdvanceSearch(site: TSupportSocialSite, sid: string) {
     <v-row v-if="configStore.searchEntifyControl.showTorrentTag || configStore.searchEntifyControl.showTorrentSubtitle">
       <!-- 种子标签信息 -->
       <div ref="tags">
+        <v-tooltip v-if="localMatches.length > 0" location="top">
+          <template v-slot:activator="{ props }">
+            <v-chip
+              v-bind="props"
+              :color="localMatches.some((m) => m.matchLevel === 'L1') ? 'success' : 'orange'"
+              class="mr-1"
+              label
+              size="x-small"
+              prepend-icon="mdi-file-check"
+              variant="elevated"
+            >
+              {{
+                localMatches.some((m) => m.matchLevel === "L1")
+                  ? t("CrossSeed.matchLevel.L1")
+                  : t("CrossSeed.matchLevel.L2")
+              }}
+            </v-chip>
+          </template>
+          <div>
+            <div v-for="m in localMatches" :key="m.infoHash" class="text-caption">
+              [{{ m.matchLevel }}] {{ m.name }} ({{ m.clientId }})
+            </div>
+          </div>
+        </v-tooltip>
+
         <template v-if="configStore.searchEntifyControl.showTorrentTag && item.tags && item.tags.length > 0">
           <v-chip v-for="tag in item.tags" :color="tag.color" class="mr-1" label size="x-small">
             {{ tag.name }}

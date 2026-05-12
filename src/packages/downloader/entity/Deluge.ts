@@ -121,6 +121,7 @@ type DelugeMethod =
   | "auth.login"
   | "web.update_ui"
   | "core.get_torrents_status"
+  | "core.get_torrent_status"
   | "core.add_torrent_url"
   | "core.add_torrent_file"
   | "core.get_free_space"
@@ -411,6 +412,19 @@ export default class Deluge extends AbstractBittorrentClient {
     } catch (e) {
       return false;
     }
+  }
+
+  public async getTorrentFiles(id: string): Promise<any[]> {
+    const torrent = await this.request<any>("core.get_torrent_status", [id, ["files"]]);
+    const files = torrent?.files;
+    if (!files) {
+      return [];
+    }
+    return files.map((file: any) => ({
+      name: file.path,
+      path: file.path,
+      length: file.size,
+    }));
   }
 
   async resumeTorrent(id: any): Promise<boolean> {

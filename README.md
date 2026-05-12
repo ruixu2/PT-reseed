@@ -3,17 +3,17 @@
 </p>
 
 <p align="center">
-    <a href="../../releases?include_prereleases/latest" title="GitHub Releases"><img src="https://img.shields.io/github/v/release/pt-plugins/PT-depiler.svg?include_prereleases"></a>
-    <a href="../../releases" title="GitHub Download"><img src="https://img.shields.io/github/downloads/pt-plugins/PT-depiler/total.svg?label=Downloads"></a>
+    <a href="../../releases?include_prereleases/latest" title="GitHub Releases"><img src="https://img.shields.io/github/v/release/pt-plugins/PT-reseed.svg?include_prereleases"></a>
+    <a href="../../releases" title="GitHub Download"><img src="https://img.shields.io/github/downloads/pt-plugins/PT-reseed/total.svg?label=Downloads"></a>
     <img src="https://img.shields.io/badge/Used-TypeScript%20Vue-blue.svg">
-    <a href="./LICENSE" title="GitHub license"><img src="https://img.shields.io/github/license/pt-plugins/PT-depiler.svg?label=License" alt="GitHub license"/></a>
+    <a href="./LICENSE" title="GitHub license"><img src="https://img.shields.io/github/license/pt-plugins/PT-reseed.svg?label=License" alt="GitHub license"/></a>
     <a href="https://t.me/joinchat/NZ9NCxPKXyby8f35rn_QTw"><img src="https://img.shields.io/badge/Telegram-Chat-blue.svg?logo=telegram" alt="Telegram"/></a>
-    <a href="https://deepwiki.com/pt-plugins/PT-depiler"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/></a>
+    <a href="https://deepwiki.com/pt-plugins/PT-reseed"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"/></a>
 </p>
 
 ### 🚀 关于 Introduction
 
-PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) 基础上，
+PT-reseed（曾用名 PT-depiler）是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) 基础上，
 基于浏览器最新的 [Manifest v3](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3) 标准开发的一款浏览器插件（Web Extensions），
 一个可以提升 PT 站点使用效率的工具。
 
@@ -27,7 +27,13 @@ PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Pl
 - **智能搜索**：增强搜索功能，支持多站点同时搜索并合并结果
 - **用户信息管理**：集中显示和管理各站点的用户信息和统计数据
 - **地址栏快速搜索**：在浏览器地址栏中输入 `ptd` 后按 Tab 键即可快速调用智能搜索功能
+- **辅种与查重 (New)**：分析下载器中已完成的种子，识别跨站重复资源，并支持基于元数据的全站反向辅种搜索。详细设计请参考 [设计文档](./docs/feature-torrent-analysis.md)
 - 更多功能请参考 [Wiki](../../wiki)
+
+### 📄 项目文档 Documentation
+
+- **项目概览**：查看 [PROJECT.md](./PROJECT.md) 了解技术栈与架构
+- **开发路线图**：查看 [PLAN.md](./PLAN.md) 了解当前优先级与未来计划
 
 ### 🔧 安装 Installation
 
@@ -37,9 +43,9 @@ PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Pl
 
 |          浏览器           | 状态                                                                                                                                                                                                                                                                                                                                |
 |:----------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|    Chrome Web Store    | [![Google Chrome](https://img.shields.io/chrome-web-store/v/iloddidemhbedaopmipajgclofjocogb.svg?label=Google%20Chrome)](https://chromewebstore.google.com/detail/pt-depiler/iloddidemhbedaopmipajgclofjocogb)                                                                                                                    | 
-|    Firefox Add-ons     | [![Mozilla Firefox](https://img.shields.io/amo/v/pt-depiler.svg?label=Mozilla%20Firefox)](https://addons.mozilla.org/zh-CN/firefox/addon/pt-depiler/)                                                                                                                                                                             | 
-| Microsoft Edge Add-ons | [![Microsoft Edge](https://img.shields.io/badge/dynamic/json?label=Edge%20Addons&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2FAddons%2Fgetproductdetailsbycrxid%2Fkbijhmckhndmeckonoikakdfdlbnlkde)](https://microsoftedge.microsoft.com/addons/detail/pt-depiler/kbijhmckhndmeckonoikakdfdlbnlkde) |
+|    Chrome Web Store    | [![Google Chrome](https://img.shields.io/chrome-web-store/v/iloddidemhbedaopmipajgclofjocogb.svg?label=Google%20Chrome)](https://chromewebstore.google.com/detail/pt-reseed/iloddidemhbedaopmipajgclofjocogb)                                                                                                                    | 
+|    Firefox Add-ons     | [![Mozilla Firefox](https://img.shields.io/amo/v/pt-reseed.svg?label=Mozilla%20Firefox)](https://addons.mozilla.org/zh-CN/firefox/addon/pt-reseed/)                                                                                                                                                                             | 
+| Microsoft Edge Add-ons | [![Microsoft Edge](https://img.shields.io/badge/dynamic/json?label=Edge%20Addons&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2FAddons%2Fgetproductdetailsbycrxid%2Fkbijhmckhndmeckonoikakdfdlbnlkde)](https://microsoftedge.microsoft.com/addons/detail/pt-reseed/kbijhmckhndmeckonoikakdfdlbnlkde) |
 
 #### 2. 从 Github Action 或者 Release 中获取并安装
 
@@ -54,8 +60,8 @@ PT-depiler 是在原 [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Pl
 建议使用 [VSCode](https://code.visualstudio.com/) 或 [WebStorm](https://www.jetbrains.com/webstorm/) 作为开发工具。
 
 ```bash
-git clone https://github.com/pt-plugins/PT-depiler
-cd PT-depiler
+git clone https://github.com/pt-plugins/PT-reseed
+cd PT-reseed
 pnpm install
 # pnpm dev
 pnpm build:dist    # or pnpm build:dist-firefox
@@ -88,10 +94,10 @@ Copyright (c) 2020-present [pt-plugins](https://github.com/pt-plugins)
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=pt-plugins/PT-depiler&type=Date)](https://www.star-history.com/#pt-plugins/PT-depiler&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=pt-plugins/PT-reseed&type=Date)](https://www.star-history.com/#pt-plugins/PT-reseed&Date)
 
 --------------
 
 特别感谢以下所有为本项目做出贡献的人 😍！
 
-[![Contributors](https://contrib.rocks/image?repo=pt-plugins/PT-depiler)](../../graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=pt-plugins/PT-reseed)](../../graphs/contributors)

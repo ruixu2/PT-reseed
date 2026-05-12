@@ -1,26 +1,41 @@
-# PT-depiler Development Plan
+# PT-reseed Development Plan
 
-This document outlines the current roadmap and upcoming tasks for the PT-depiler project.
+This document outlines the product roadmap and development phases for the PT-reseed extension.
 
-## 🎯 Immediate Priorities
-- **Site Adaptations**: Continue adding and fixing adapters for PT sites based on community requests in [Issue Templates](../../ISSUE_TEMPLATE/站点适配.md).
-- **Bug Fixes**: Address reported issues regarding data extraction, UI glitches, and downloader connectivity.
-- **PTPP Migration**: Enhance the migration logic for historical data from PT-Plugin-Plus.
+## 🎯 Phase 1: Cross-Seeding MVP & Stabilization (Current)
+*Status: Completed & Deploying*
+
+- [x] **Downloader Architecture**: Update API to fetch full file metadata (supports 8+ clients).
+- [x] **Storage Engine**: Migrate to IndexedDB v4 for robust metadata caching.
+- [x] **Discovery UI**: Dedicated options page for duplicate visualization and manual reverse search.
+- [x] **Passive Discovery**: Display "Locally Stored" badges in regular search results.
+- [x] **Action Integration**: "One-Click Cross-Seed" to push found torrents to the exact local path.
+
+## 🚀 Phase 2: Automation & Intelligence (Next Iteration)
+*Status: In Planning*
+
+Inspired by the efficiency of "Reseed Puppy", this phase focuses on reducing user intervention and increasing match safety.
+
+- [ ] **Automated Reseed Queue (The Runner)**: 
+  - Allow users to select multiple finished torrents to enqueue for background cross-seeding.
+  - Implement a background task manager with intelligent rate limiting to respect tracker API limits and prevent account bans.
+- [ ] **Advanced Matching Logic (L2 & L3)**:
+  - **L2 (Fuzzy Match)**: Support matching when the main video file is identical, but minor files (NFOs, samples) differ.
+  - **L3 (Deep Scan)**: Fetch the `.torrent` file from the target site and compare piece hashes before injecting into the downloader.
+- [ ] **Staging Area UI**: 
+  - Instead of direct injection, auto-matched torrents land in a "Pending Review" list for batch approval, preventing unintended data corruption.
+
+## 🌐 Phase 3: Multi-Site Orchestration
+*Status: Backlog*
+
+- [ ] **Cross-Client Reseeding**: Scan source data from Downloader A (e.g., qBittorrent for downloading) and reseed to Downloader B (e.g., Transmission for long-term seeding).
+- [ ] **Smart Source Tracking**: Automatically extract the `source` or tracker URL from the local `.torrent` to skip searching the origin site, saving API calls.
+- [ ] **Auto-Resume Integration**: After a successful "Pause-on-Add" injection and a successful hash check by the downloader, automatically resume the torrent.
 
 ## 🛠 Ongoing Enhancements
-- **UI/UX Polishing**:
-  - Refine the dashboard and statistics views with better ECharts integration.
-  - Improve mobile responsiveness for the options page.
-  - Add more customization options for the content-script UI (speed-dial, badges).
-- **Functional Features**:
-  - Improve H&R (Hit and Run) tracking and notification.
-  - Optimize the "Auto-Extend Cookie" logic to ensure long-term site connectivity.
-  - Expand Douban/Bangumi integration for easier "Search to Download" workflows.
-
-## 🚀 Strategic Goals
-- **Performance Optimization**: Reduce the footprint of the background service worker and optimize IndexedDB queries.
-- **Stability**: Ensure full compatibility across Chrome, Edge, and Firefox (handling MV3 differences).
-- **Extensibility**: Refactor site adapters to be more declarative, making it easier for contributors to add new sites without deep coding knowledge.
+- **UI/UX Polishing**: Refine dashboard statistics (ECharts) and mobile responsiveness.
+- **Site Maintenance**: Continuously add and fix tracker adapters based on community feedback.
+- **PTPP Migration**: Maintain compatibility for users migrating history from PT-Plugin-Plus.
 
 ## 🤝 Contribution Areas
 - **New Sites**: Creating `src/packages/site/` adapters.

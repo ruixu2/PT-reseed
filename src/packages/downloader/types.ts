@@ -153,8 +153,17 @@ export interface CTorrent<RAW = any> {
    */
   totalDownloaded: number;
 
+  files?: CTorrentFile[];
+  trackers?: string[];
+
   raw: RAW;
   clientId: string;
+}
+
+export interface CTorrentFile {
+  name: string;
+  path: string;
+  length: number;
 }
 
 // 种子筛选方法
@@ -303,6 +312,9 @@ export abstract class AbstractBittorrentClient<T extends DownloaderBaseConfig = 
   public async getTorrent(id: string): Promise<CTorrent> {
     return (await this.getTorrentsBy({ ids: id }))[0];
   }
+
+  // 获取种子文件列表
+  public abstract getTorrentFiles(id: any): Promise<CTorrentFile[]>;
 
   // 添加种子
   public abstract addTorrent(url: string, options: Partial<CAddTorrentOptions>): Promise<CAddTorrentResult>;

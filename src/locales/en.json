@@ -38,7 +38,7 @@
     "edit": "Edit",
     "language": "Language",
     "name": "Name",
-    "project": "PT Depiler",
+    "project": "PT-reseed",
     "remove": "Delete",
     "save": "Save",
     "search": "Search",
@@ -105,20 +105,20 @@
     }
   },
   "manifest": {
-    "extDesc": "PT Depiler",
-    "extName": "PT Depiler",
+    "extDesc": "PT-reseed (formerly PT-depiler)",
+    "extName": "PT-reseed",
     "searchPlanAll": "All Sites",
     "searchPlanSingleSite": "Single Site",
     "searchPlanDefault": "Default",
     "omniboxSearch": "Search $2 in [ $1 ]",
-    "contextMenuSearch": "Using PT Depiler to Search for \"%s\" related torrents",
-    "contextMenuSearchWithDouban": "Using PT Depiler to Search This Douban ID",
-    "contextMenuSearchWithIMDb": "Using PT Depiler to Search This IMDb ID",
+    "contextMenuSearch": "Using PT-reseed to Search for \"%s\" related torrents",
+    "contextMenuSearchWithDouban": "Using PT-reseed to Search This Douban ID",
+    "contextMenuSearchWithIMDb": "Using PT-reseed to Search This IMDb ID",
     "contextMenuSearchInDefault": "Search in the default plan",
     "contextMenuSearchInSolution": "Search in the specified plan",
     "contextMenuSearchInSite": "Search in the specified site",
     "contextMenuSearchInThisSite": "Search in this site",
-    "contextMenuSendToDownloader": "Using PT Depiler to Download link",
+    "contextMenuSendToDownloader": "Using PT-reseed to Download link",
     "contextMenuSendToDownloaderAdvanced": "Advanced push",
     "contextMenuSendToDownloaderIn": "Push to $1 -> $2",
     "contextMenuSendToDownloaderDefaultFolder": "Default path",
@@ -146,6 +146,7 @@
       "MyData": "My Data",
       "SearchEntity": "Search Results",
       "SearchResultSnapshot": "Search Snapshot",
+      "CrossSeed": "Cross-Seeding",
       "default": "Overview"
     },
     "Settings": {
@@ -246,6 +247,55 @@
       "title": "Re-download {0} records",
       "oldMethod": "Retry with original method",
       "selectDownloader": "Select Downloader"
+    }
+  },
+  "CrossSeed": {
+    "intro": "The Cross-Seeding feature can scan completed torrents in your downloaders and analyze duplicates across different sites. It also supports reverse searching for reseedable resources across all configured PT sites based on local torrent metadata.",
+    "selectDownloader": "Select Downloader",
+    "startScan": "Start Scan for Completed Torrents",
+    "scanSuccess": "Scan and analysis completed",
+    "scanError": "Scan failed, please check downloader connection",
+    "analysisResult": "Duplicate Analysis Result",
+    "duplicateGroups": "Found {count} groups of duplicate resources",
+    "noDuplicates": "No analysis result yet, please select a downloader and start scanning",
+    "searchOnSites": "Search Across All Sites",
+    "searchFound": "Found {count} matching resources on other sites",
+    "searchNotFound": "No matching resources found on other sites",
+    "searchError": "Search failed",
+    "searchResultTitle": "Global Cross-Seed Matches Found",
+    "table": {
+      "groupName": "Resource Name",
+      "size": "Size",
+      "count": "Duplicates",
+      "matchLevel": "Match Level"
+    },
+    "matchLevel": {
+      "L1": "Exact Match",
+      "L1_desc": "File size and structure are identical. Safe for direct cross-seeding.",
+      "L2": "Fuzzy Match",
+      "L2_desc": "Primary file matches, but minor files (NFO/images) may differ. Selective download recommended."
+    },
+    "localMatch": "Locally Stored",
+    "quickCrossSeed": "One-Click Cross-Seed",
+    "targetDownloader": "Target Downloader",
+    "selectTargetClient": "Select Target Downloader",
+    "tabs": {
+      "analysis": "Analysis",
+      "queue": "Automation Queue"
+    },
+    "addToQueue": "Add to Queue",
+    "addQueueSuccess": "Added {count} torrents to queue",
+    "addQueueError": "Failed to add to queue",
+    "queueTitle": "Background Reseed Tasks",
+    "noQueueItems": "No background tasks yet. Select torrents from the analysis page and add them to the queue.",
+    "startRunner": "Start Runner",
+    "status": {
+      "waiting": "Waiting",
+      "searching": "Searching",
+      "matched": "Matches Found",
+      "no_match": "No Match",
+      "error": "Error",
+      "completed": "Completed"
     }
   },
   "KeepUploadTask": {
@@ -697,7 +747,7 @@
     },
     "info": {
       "title": "About Native Bridge",
-      "description": "The native bridge allows the PT-Depiler CLI tool to communicate with this extension. It requires the CLI tool to be installed separately on your computer.",
+      "description": "The native bridge allows the PT-reseed CLI tool to communicate with this extension. It requires the CLI tool to be installed separately on your computer.",
       "cliRequired": "The external CLI tool must be installed for this feature to work. Native bridge is not available on mobile platforms. See {0} for installation instructions.",
       "cliLink": "ptd-cli",
       "setupCommand": "Run the following command to register this extension with the CLI tool:",

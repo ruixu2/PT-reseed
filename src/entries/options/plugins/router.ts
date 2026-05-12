@@ -89,6 +89,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { icon: "mdi-merge" },
         component: () => import("../views/Overview/KeepUploadTask/Index.vue"),
       },
+      {
+        path: "/cross-seed",
+        name: "CrossSeed",
+        meta: { icon: "mdi-magnify-scan" },
+        component: () => import("../views/Overview/CrossSeed/Index.vue"),
+      },
     ],
   },
   {

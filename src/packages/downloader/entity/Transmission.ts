@@ -64,6 +64,12 @@ interface rawTorrent {
    * Byte count of all the non-corrupt data you've ever downloaded for this torrent. If you deleted the files and downloaded a second time, this will be 2*totalSize.
    */
   downloadedEver: number;
+  trackers: Array<{
+    announce: string;
+    id: number;
+    sit: number;
+    tier: number;
+  }>;
 }
 
 interface TransmissionBaseResponse<T = any> {
@@ -234,6 +240,7 @@ export default class Transmission extends AbstractBittorrentClient<TorrentClient
     "totalSize",
     "leftUntilDone",
     "labels",
+    "trackers",
   ];
 
   // 实例真实使用的rpc地址
@@ -428,6 +435,7 @@ export default class Transmission extends AbstractBittorrentClient<TorrentClient
         downloadSpeed: torrent.rateDownload,
         totalUploaded: torrent.uploadedEver,
         totalDownloaded: torrent.downloadedEver,
+        trackers: torrent.trackers?.map((t) => t.announce),
         raw: torrent,
         clientId: this.config.id,
       } as CTorrent<rawTorrent>;
@@ -463,6 +471,25 @@ export default class Transmission extends AbstractBittorrentClient<TorrentClient
     };
     await this.request("torrent-start", args);
     return true;
+  }
+
+  // 获取种子文件列表
+  public async getTorrentFiles(id: number): Promise<any[]> {
+    const { data } = await this.request<any>("torrent-get", {
+      ids: [id],
+      fields: ["files"],
+    });
+
+    const torrent = data.arguments.torrents[0];
+    if (!torrent || !torrent.files) {
+      return [];
+    }
+
+    return torrent.files.map((file: any) => ({
+      name: file.name,
+      path: file.name,
+      length: file.length,
+    }));
   }
 
   async request<T>(method: TransmissionRequestMethod, args: any = {}): Promise<AxiosResponse<T>> {

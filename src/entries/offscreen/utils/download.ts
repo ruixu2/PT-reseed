@@ -77,6 +77,33 @@ onMessage("getDownloaderStatus", async ({ data: downloaderId }) => {
   return downloaderStatus;
 });
 
+onMessage("pingDownloader", async ({ data: downloaderId }) => {
+  const downloaderConfig = await getDownloaderConfig(downloaderId);
+  if (downloaderConfig.id) {
+    const downloaderInstance = await getDownloader(downloaderConfig);
+    return await downloaderInstance.ping();
+  }
+  return false;
+});
+
+onMessage("getDownloaderTorrents", async ({ data: downloaderId }) => {
+  const downloaderConfig = await getDownloaderConfig(downloaderId);
+  if (downloaderConfig.id) {
+    const downloaderInstance = await getDownloader(downloaderConfig);
+    return await downloaderInstance.getAllTorrents();
+  }
+  return [];
+});
+
+onMessage("getDownloaderTorrentFiles", async ({ data: { downloaderId, torrentId } }) => {
+  const downloaderConfig = await getDownloaderConfig(downloaderId);
+  if (downloaderConfig.id) {
+    const downloaderInstance = await getDownloader(downloaderConfig);
+    return await downloaderInstance.getTorrentFiles(torrentId);
+  }
+  return [];
+});
+
 export async function getTorrentDownloadLink(torrent: ITorrent) {
   const site = await getSiteInstance<"public">(torrent.site);
   return await site.getTorrentDownloadLink(torrent);

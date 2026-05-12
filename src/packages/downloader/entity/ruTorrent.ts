@@ -337,9 +337,15 @@ export default class RuTorrent extends AbstractBittorrentClient<TorrentClientCon
     return true;
   }
 
+  public async getTorrentFiles(id: any): Promise<any[]> {
+    // rtorrent file list is quite complex to get via xmlrpc without knowing the file index
+    // For now, return empty or implement via f.multicall
+    return [];
+  }
+
   async resumeTorrent(id: string): Promise<boolean> {
     const postData = new URLSearchParams({
-      mode: "post",
+      mode: "start", // Fixed: was "post" but rutorrent uses start
       hash: id.toUpperCase(),
     });
     await this.requestHttpRpc(postData);

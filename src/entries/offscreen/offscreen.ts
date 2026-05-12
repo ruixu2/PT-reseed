@@ -8,3 +8,5 @@ import "./utils/userInfo.ts";
 import "./utils/backup.ts";
 import "./utils/socialInformation.ts";
 import "./utils/keepUploadTask.ts";
+import "./utils/crossSeed.ts";
+import "./utils/reseedRunner.ts";

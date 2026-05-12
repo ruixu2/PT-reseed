@@ -165,43 +165,11 @@ interface SynologySuccessResponse<S> {
 interface SynologyInfoApiResponseData {
   [key: string]: {
     maxVersion: SYNOVersion;
-    minVersion: 1 | 2; // 未看到有高于这两个的，所以在这直接限定
+    minVersion: 1 | 2; // 未看到有高于这两个的，所以在这直接限制
     path: string;
     requestFormat?: "JSON";
   };
 }
-
-/**
- enum SynologyErrorCode {
-  // Common Error Code
-  UNKNOWN_ERROR = 100, // Unknown error
-  INVALID_PARAMETER = 101, // Invalid parameter
-  API_NOT_EXIST = 102, // The requested API does not exist
-  METHOD_NOT_EXIST = 103, // The requested method does not exist
-  VERSION_NOT_SUPPORT = 104, // The requested version does not support the functionality
-  PERMISSION_DENY = 105, // The logged in session does not have permission
-  SESSION_TIMEOUT = 105, // Session timeout
-  SESSION_INTERRUPTED = 106, // Session interrupted by duplicate login
-
-  // Auth Error Code
-  AUTH_INCORRECT_AUTHENTICATION = 400, // No such account or incorrect password
-  AUTH_ACCOUNT_DISABLED = 401, // Account disabled
-  AUTH_PERMISSION_DENIED = 402, // Permission denied
-  AUTH_VERIFICATION_CODE_REQUIRED = 403, // 2-step verification code required
-  AUTH_VERIFICATION_CODE_FAILED = 404, //  Failed to authenticate 2-step verification code
-
-  // Torrent Upload Error Code
-  TORRENT_UPLOAD_FAILED = 400, // File upload failed
-  TORRENT_UPLOAD_MAX_TASKS_REACHED = 401, // Max number of tasks reached
-  TORRENT_UPLOAD_DESTINATION_DENIED = 402, // Destination denied
-  TORRENT_UPLOAD_DESTINATION_NOT_EXIST = 403, // Destination does not exist
-  TORRENT_UPLOAD_INVALID_TASK_ID = 404, // Invalid task id
-  TORRENT_UPLOAD_INVALID_TASK_ACTION = 405, // Invalid task action
-  TORRENT_UPLOAD_NO_DEFAULT_DESTINATION = 406, // No default destination
-  TORRENT_UPLOAD_SET_DESTINATION_FAILED = 407, // Set destination failed
-  TORRENT_UPLOAD_FILE_NOT_EXIST = 408, // File does not exist
-}
- */
 
 interface SynologyFailureResponse {
   success: false;
@@ -243,41 +211,6 @@ enum rawTaskStatusInt {
   TASK_POSTPROCESSING = 14,
   TASK_CAPTCHA_NEEDED = 15,
   TASK_ERROR = 101,
-  /**
-   TASK_ERROR_BROKEN_LINK = 102,
-   TASK_ERROR_DEST_DENY = 104,
-   TASK_ERROR_DEST_FILE_DUPLICATE = 132,
-   TASK_ERROR_DEST_NO_EXIST = 103,
-   TASK_ERROR_DISK_FULL = 105,
-   TASK_ERROR_ED2K_LINK_DUPLICATE = 131,
-   TASK_ERROR_ENCRYPTION = 126,
-   TASK_ERROR_EXCEED_MAX_DEST_FS_SIZE = 110,
-   TASK_ERROR_EXCEED_MAX_FS_SIZE = 108,
-   TASK_ERROR_EXCEED_MAX_TEMP_FS_SIZE = 109,
-   TASK_ERROR_EXTRACT_DISK_FULL = 122,
-   TASK_ERROR_EXTRACT_FAIL = 118,
-   TASK_ERROR_EXTRACT_FOLDER_NOT_EXIST = 129,
-   TASK_ERROR_EXTRACT_INVALID_ARCHIVE = 120,
-   TASK_ERROR_EXTRACT_QUOTA_REACHED = 121,
-   TASK_ERROR_EXTRACT_WRONG_PASSWORD = 119,
-   TASK_ERROR_FILE_NO_EXIST = 114,
-   TASK_ERROR_FTP_ENCRYPTION_NOT_SUPPORT_TYPE = 117,
-   TASK_ERROR_INVALID_ACCOUNT_PASSWORD = 134,
-   TASK_ERROR_MISSING_PYTHON = 127,
-   TASK_ERROR_NAME_TOO_LONG = 112,
-   TASK_ERROR_NAME_TOO_LONG_ENCRYPTION = 111,
-   TASK_ERROR_NOT_SUPPORT_TYPE = 116,
-   TASK_ERROR_NZB_MISSING_ARTICLE = 130,
-   TASK_ERROR_PARCHIVE_REPAIR_FAILED = 133,
-   TASK_ERROR_PRIVATE_VIDEO = 128,
-   TASK_ERROR_QUOTA_REACHED = 106,
-   TASK_ERROR_REQUIRED_ACCOUNT = 124,
-   TASK_ERROR_REQUIRED_PREMIUM = 115,
-   TASK_ERROR_TIMEOUT = 107,
-   TASK_ERROR_TORRENT_DUPLICATE = 113,
-   TASK_ERROR_TORRENT_INVALID = 123,
-   TASK_ERROR_TRY_IT_LATER = 125,
-   */
 }
 
 interface rawTask {
@@ -289,7 +222,7 @@ interface rawTask {
 
   /**
    * 如果通过 SYNO.DownloadStation.Task 接口，返回的是字符串
-   * 但通过  SYNO.DownloadStation2.Task 接口，返回的是int，但映射关系目前不明确
+   * 但通过  SYNO.DownloadStation2.Task 接口，返回的是int，但映射关系目前不明
    */
   status: rawTaskStatus | number;
   status_extra?: {
@@ -422,8 +355,8 @@ export default class SynologyDownloadStation extends AbstractBittorrentClient<To
 
     /**
      * fix: https://github.com/ronggang/PT-Plugin-Plus/issues/687
-     * 由于 DSM 7 以上， SYNO.API.Auth 接口当 version 为 2 时，会直接报 103 错误
-     * 此时将 version 指到 3，可以正常获得 sid
+     * 由于 DSM 7 以上的 SYNO.API.Auth 接口在 version 为 2 时，会直接报 103 错误
+     * 此时把 version 指到 3，可以正常获取 sid
      */
     const loginVersion = (apiInfo["SYNO.API.Auth"]?.maxVersion || 6) >= 7 ? 3 : 2;
 
@@ -512,7 +445,7 @@ export default class SynologyDownloadStation extends AbstractBittorrentClient<To
     };
 
     /**
-     * destination 和 type 很奇怪，不包一层的话，会报 对应项 缺失。。。。。
+     * destination 的 type 很奇怪，不包一层的话，会报 对应的缺失。。。。。。
      *
      * - 对于 destination:
      *    如果外部不传入 savePath ，我们须设置一个空值出来，否则 DSM 会报 error_code 120
@@ -549,9 +482,6 @@ export default class SynologyDownloadStation extends AbstractBittorrentClient<To
       if (options.addAtPaused && req.data.task_id.length > 0) {
         await this.pauseTorrent(req.data.task_id[0]);
       }
-
-      // Note: Synology Download Station does not support upload speed limit configuration
-      // The uploadSpeedLimit feature is not implemented as it's not supported by the API
     }
 
     // 添加异常处理方法
@@ -644,7 +574,7 @@ export default class SynologyDownloadStation extends AbstractBittorrentClient<To
                 state = CTorrentState.downloading;
                 break;
 
-              // 我们认为一些 finishing 和 finished 也是属于 paused 状态
+              // 我们认为一个 finishing 与 finished 也是属于 paused 状态
               case rawTaskStatusInt.TASK_PAUSED:
               case rawTaskStatusInt.TASK_FINISHING:
               case rawTaskStatusInt.TASK_DOWNLOADED:
@@ -713,7 +643,7 @@ export default class SynologyDownloadStation extends AbstractBittorrentClient<To
   }
 
   /**
-   * 注意，因为DSM的原因（不支持 只删除种子不删除文件），removeData配置项不会起作用，
+   * 注意，因为DSM的原因（不支持 只删除种子不删除文件），removeData配置项不会起作用。
    *
    * @param id
    * @param removeData
@@ -729,5 +659,22 @@ export default class SynologyDownloadStation extends AbstractBittorrentClient<To
         force_complete: false,
       })
     ).success;
+  }
+
+  public async getTorrentFiles(id: string): Promise<any[]> {
+    const req = await this.requestEntryCGI<any>({
+      id: id,
+      api: "SYNO.DownloadStation2.Task.BT.File",
+      method: "list",
+      version: 1,
+    });
+    if (req.success && req.data.file) {
+      return req.data.file.map((file: any) => ({
+        name: file.filename,
+        path: file.filename,
+        length: file.size,
+      }));
+    }
+    return [];
   }
 }

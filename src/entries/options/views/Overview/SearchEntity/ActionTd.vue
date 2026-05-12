@@ -76,10 +76,68 @@ const showKeepUploadDialog = ref(false);
 function openKeepUploadDialog() {
   showKeepUploadDialog.value = true;
 }
+
+const localMatches = ref<any[]>([]);
+async function checkLocalMatch() {
+  if (torrentItems.length !== 1) return;
+  const torrent = torrentItems[0];
+  if (!torrent.size) return;
+  localMatches.value = (await sendMessage("findLocalTorrentBySize", torrent.size)) as any[];
+}
+
+computed(() => {
+  checkLocalMatch();
+});
+
+// Since computed above won't trigger if not used, we use a watch or onMounted
+import { onMounted, watch } from "vue";
+onMounted(checkLocalMatch);
+watch(() => torrentItems, checkLocalMatch, { deep: true });
+
+async function quickCrossSeed(match: any) {
+  const torrent = torrentItems[0];
+  try {
+    const result: any = await sendMessage("downloadTorrent", {
+      torrent,
+      downloaderId: match.clientId,
+      options: {
+        savePath: match.savePath,
+        addAtPaused: true, // 辅种默认暂停安全
+      },
+    });
+    if (result.success) {
+      runtimeStore.showSnakebar(t("CrossSeed.sendSuccess"), { color: "success" });
+    } else {
+      runtimeStore.showSnakebar(t("CrossSeed.sendError"), { color: "error" });
+    }
+  } catch (e) {
+    runtimeStore.showSnakebar(t("CrossSeed.sendError"), { color: "error" });
+  }
+}
 </script>
 
 <template>
   <v-btn-group :density="density" class="table-action" color="grey" variant="text">
+    <!-- 快速辅种按钮 (仅当存在本地匹配时显示) -->
+    <v-menu v-if="localMatches.length > 0" open-on-hover>
+      <template v-slot:activator="{ props }">
+        <v-btn
+          v-bind="props"
+          :size="btnSize"
+          icon="mdi-seed-plus"
+          color="success"
+          :title="t('CrossSeed.quickCrossSeed')"
+        />
+      </template>
+      <v-list density="compact">
+        <v-list-subheader>{{ t("CrossSeed.selectTargetClient") }}</v-list-subheader>
+        <v-list-item v-for="m in localMatches" :key="m.infoHash" @click="quickCrossSeed(m)">
+          <v-list-item-title>{{ m.clientId }}</v-list-item-title>
+          <v-list-item-subtitle class="text-caption">{{ m.savePath }}</v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+
     <v-btn
       v-if="metadataStore.defaultDownloader?.id"
       :disabled="torrentItems.length == 0"

@@ -37,7 +37,7 @@ export const clientMetaData: TorrentClientMetaData = {
   warning: [
     "同时兼容 Flood 原版以及 jesec修改版",
     "如果当前已登录Flood面板，请退出登陆后再做连接性测试",
-    "目前无法准确获得Flood的种子操作（添加、启动、暂停、删除）是否成功。",
+    "目前无法准确获得Flood的种子操作（添加、启动、暂停、删除）是否成功",
   ],
   feature: {
     CustomPath: {
@@ -190,7 +190,7 @@ const legacyActivityEventType = [
 ] as const;
 
 /**
- * 原版的种子情况需要使用 EventSource获取
+ * 原版的种子情况需要使用 EventSource 获取
  * 通过获取
  *
  * @param path
@@ -515,5 +515,24 @@ export default class Flood extends AbstractBittorrentClient {
     });
 
     return true;
+  }
+
+  public async getTorrentFiles(id: string): Promise<any[]> {
+    const endPointType = await this.getEndPointType();
+    if (endPointType === "jesec") {
+      try {
+        const { data } = await this.request<any[]>("getTorrents" as any, {
+          url: `/api/torrents/${id}/contents`,
+        });
+        return data.map((file) => ({
+          name: file.path,
+          path: file.path,
+          length: file.size,
+        }));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   }
 }

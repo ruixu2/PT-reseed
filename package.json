@@ -1,9 +1,9 @@
 {
-  "name": "pt-depiler",
+  "name": "pt-reseed",
   "private": true,
   "version": "0.0.6",
   "type": "module",
-  "homepage": "https://github.com/pt-plugins/PT-depiler",
+  "homepage": "https://github.com/pt-plugins/PT-reseed",
   "packageManager": "pnpm@10.21.0",
   "author": {
     "name": "Pt-Plugins",

@@ -1,0 +1,19 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Round Rect -->
+  <rect width="128" height="128" rx="28" fill="white"/>
+  
+  <!-- Tech Blue Ring - Represents Seeding/Loop -->
+  <path d="M40 85C32.5 77.5 28 67.3 28 56C28 34.5 45.5 17 67 17C82.5 17 95.8 26 102 39" 
+        stroke="#2196F3" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Vital Green Leaf - Represents Reseed/Growth -->
+  <path d="M102 39C105 45 106 52 106 59C106 77.5 91 93 72.5 93C65 93 59 90.5 54 86" 
+        stroke="#4CAF50" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Leaf Tip Detail -->
+  <path d="M102 39L114 25C114 25 102 22 92 30" fill="#4CAF50"/>
+  
+  <!-- Center Seed Point -->
+  <circle cx="67" cy="56" r="14" fill="#2196F3" opacity="0.8"/>
+  <circle cx="67" cy="56" r="6" fill="white"/>
+</svg>

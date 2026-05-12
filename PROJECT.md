@@ -1,6 +1,6 @@
-# PT-depiler (Project Overview)
+# PT-reseed (Project Overview)
 
-PT-depiler is a modern browser extension (Manifest V3) designed to enhance the efficiency of Private Tracker (PT) users. It is a complete rewrite and successor to the original [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus), optimized for performance and modern web standards.
+PT-reseed is a modern browser extension (Manifest V3) designed to enhance the efficiency of Private Tracker (PT) users. It is a complete rewrite and successor to the original [PT-Plugin-Plus](https://github.com/pt-plugins/PT-Plugin-Plus) (formerly known as PT-depiler during development), optimized for performance and modern web standards.
 
 ## 🚀 Core Features
 - **Multi-Site Integration**: Supports numerous PT site architectures (NexusPHP, Unit3D, Gazelle, etc.) with aggregated search and user stat tracking.
@@ -8,6 +8,10 @@ PT-depiler is a modern browser extension (Manifest V3) designed to enhance the e
 - **Data Synchronization**: Built-in support for WebDav, Gist, CookieCloud, and major cloud drives for configuration backup.
 - **User Statistics**: Centralized dashboard for tracking upload/download, ratio, and seeding progress across all configured sites.
 - **Smart Search**: Integrated keyword and IMDb/Douban-based search across multiple trackers.
+- **Cross-Seeding & Discovery**:
+  - **Intelligent Duplicate Analysis**: Automatically group and identify duplicate resources across different sites.
+  - **Passive Discovery**: Highlight potential cross-seed matches directly in search results.
+  - **One-Click Cross-Seed**: Quickly add torrents to downloaders using existing local data paths.
 
 ## 🛠 Tech Stack
 - **Framework**: [Vue 3](https://vuejs.org/) (Composition API)

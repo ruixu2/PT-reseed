@@ -26,10 +26,9 @@ export const clientConfig: TorrentClientConfig = {
 
 // noinspection JSUnusedGlobalSymbols
 export const clientMetaData: TorrentClientMetaData = {
-  description:
-    "μTorrent 是一个小巧强劲，全功能，用C++编写，支持Windows、Mac OS X和GNU/Linux平台的免费BitTorrent客户端。",
+  description: "μTorrent 是一个小巧强劲，全功能，用C++编写，支持Windows、Mac OS X和GNU/Linux平台的免费BitTorrent客户端",
   warning: [
-    "由于 µTorrent Web API 接口不统一，当前仅支持 µTorrent Windows 版本，Mac 版本测试不可用，其他系统未知。",
+    "由于 µTorrent Web API 接口不统一，当前仅支持 µTorrent Windows 版本，Mac 版本测试不可用，其他系统未知",
     "使用前请确认 WebUI 已安装并开启",
   ],
   feature: {
@@ -196,7 +195,7 @@ export default class UTorrent extends AbstractBittorrentClient<TorrentClientConf
     return version;
   }
 
-  // 除"登录"和"添加种子"外的所有接口方法都走该方法
+  // 除了 登录"与"添加种子"外的所有接口方法都走该方法
   async request<T extends BaseUtorrentResponse>(
     action: string,
     params: {
@@ -229,9 +228,9 @@ export default class UTorrent extends AbstractBittorrentClient<TorrentClientConf
 
     let formData: FormData | null = new FormData();
     const params: { [key: string]: any } = {
-      // 注意： uTorrent 对参数顺序有要求，必须要按照下面顺序，否则会报 invalid request 错误
+      // 注意：uTorrent 对参数顺序有要求，必须要按照下面顺序，否则会报 invalid request 错误
       token: _sid,
-      action: "", // 空白占位，后面会覆写的
+      action: "", // 空白占位，后面会覆写之
       download_dir: 0,
       path: options.savePath ? options.savePath : "",
     };
@@ -367,5 +366,17 @@ export default class UTorrent extends AbstractBittorrentClient<TorrentClientConf
     const action = removeData ? "removedatatorrent" : "removetorrent";
     await this.request<BaseUtorrentResponse>(action, { hash: id });
     return true;
+  }
+
+  public async getTorrentFiles(id: string): Promise<any[]> {
+    const { files } = await this.request<any>("getfiles", { hash: id });
+    if (files && files[1]) {
+      return files[1].map((file: any) => ({
+        name: file[0],
+        path: file[0],
+        length: file[1],
+      }));
+    }
+    return [];
   }
 }

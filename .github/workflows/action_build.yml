@@ -1,4 +1,4 @@
-name: Build Action Release
+name: PT-reseed Build Action
 
 on:
   push:

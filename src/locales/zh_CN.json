@@ -38,7 +38,7 @@
     "edit": "编辑",
     "language": "语言",
     "name": "名称",
-    "project": "PT 助手 Plus",
+    "project": "PT-reseed",
     "remove": "删除",
     "save": "保存",
     "search": "搜索",
@@ -105,20 +105,20 @@
     }
   },
   "manifest": {
-    "extDesc": "PT Depiler",
-    "extName": "PT Depiler",
+    "extDesc": "PT-reseed (formerly PT-depiler)",
+    "extName": "PT-reseed",
     "searchPlanAll": "全部站点",
     "searchPlanSingleSite": "单个站点",
     "searchPlanDefault": "默认",
     "omniboxSearch": "在 [ $1 ] 中搜索 $2",
-    "contextMenuSearch": "使用 PT Depiler 搜索 \"%s\" 相关的种子",
-    "contextMenuSearchWithDouban": "使用 PT Depiler 搜索当前豆瓣链接相关种子",
-    "contextMenuSearchWithIMDb": "使用 PT Depiler 搜索IMDb链接相关种子",
+    "contextMenuSearch": "使用 PT-reseed 搜索 \"%s\" 相关的种子",
+    "contextMenuSearchWithDouban": "使用 PT-reseed 搜索当前豆瓣链接相关种子",
+    "contextMenuSearchWithIMDb": "使用 PT-reseed 搜索IMDb链接相关种子",
     "contextMenuSearchInDefault": "在默认方案中搜索",
     "contextMenuSearchInSolution": "在指定方案中搜索",
     "contextMenuSearchInSite": "在指定站点中搜索",
     "contextMenuSearchInThisSite": "在本站点中搜索",
-    "contextMenuSendToDownloader": "使用 PT Depiler 下载链接",
+    "contextMenuSendToDownloader": "使用 PT-reseed 下载链接",
     "contextMenuSendToDownloaderAdvanced": "高级推送",
     "contextMenuSendToDownloaderIn": "推送到 $1 -> $2",
     "contextMenuSendToDownloaderDefaultFolder": "默认路径",
@@ -146,6 +146,7 @@
       "MyData": "我的数据",
       "SearchEntity": "搜索结果",
       "SearchResultSnapshot": "搜索结果快照",
+      "CrossSeed": "辅种与查重",
       "default": "概览"
     },
     "Settings": {
@@ -246,6 +247,55 @@
       "title": "重新下载 {0} 条记录",
       "oldMethod": "按原下载方式重试",
       "selectDownloader": "选择下载服务器"
+    }
+  },
+  "CrossSeed": {
+    "intro": "辅种查重功能可以扫描您下载器中已完成的种子，并分析不同站点之间的重复资源。同时支持根据本地种子元数据，在所有已配置的 PT 站中反向搜索可辅种的资源。",
+    "selectDownloader": "选择下载器",
+    "startScan": "开始扫描已完成种子",
+    "scanSuccess": "扫描并分析完成",
+    "scanError": "扫描失败，请检查下载器连接",
+    "analysisResult": "重复资源分析结果",
+    "duplicateGroups": "共发现 {count} 组重复资源",
+    "noDuplicates": "暂无重复资源分析结果，请先选择下载器并开始扫描",
+    "searchOnSites": "全站搜索辅种",
+    "searchFound": "在其他站点找到 {count} 个匹配资源",
+    "searchNotFound": "未在其他站点找到匹配资源",
+    "searchError": "全站搜索失败",
+    "searchResultTitle": "全站匹配资源发现",
+    "table": {
+      "groupName": "资源名称",
+      "size": "大小",
+      "count": "重复数",
+      "matchLevel": "匹配级别"
+    },
+    "matchLevel": {
+      "L1": "完全匹配",
+      "L1_desc": "文件大小和结构完全一致，可直接辅种。",
+      "L2": "模糊匹配",
+      "L2_desc": "主视频文件大小一致，但微小文件（如NFO/图）可能不同。辅种时请在下载器中忽略差异文件。"
+    },
+    "localMatch": "本地已存",
+    "quickCrossSeed": "一键辅种",
+    "targetDownloader": "目标下载器",
+    "selectTargetClient": "选择目标下载器",
+    "tabs": {
+      "analysis": "资源分析",
+      "queue": "自动化队列"
+    },
+    "addToQueue": "加入自动化队列",
+    "addQueueSuccess": "成功将 {count} 个资源加入队列",
+    "addQueueError": "加入队列失败",
+    "queueTitle": "后台辅种任务进度",
+    "noQueueItems": "暂无后台任务，请在资源分析页面中选择资源并加入队列",
+    "startRunner": "启动运行器",
+    "status": {
+      "waiting": "等待中",
+      "searching": "搜索中",
+      "matched": "已发现匹配",
+      "no_match": "未找到匹配",
+      "error": "失败",
+      "completed": "已完成"
     }
   },
   "KeepUploadTask": {
@@ -697,7 +747,7 @@
     },
     "info": {
       "title": "关于原生通信桥",
-      "description": "原生通信桥允许 PT-Depiler CLI 工具与本扩展进行通信。需要在电脑上单独安装 CLI 工具。",
+      "description": "原生通信桥允许 PT-reseed CLI 工具与本扩展进行通信。需要在电脑上单独安装 CLI 工具。",
       "cliRequired": "此功能需要安装外部 CLI 工具。移动平台上不可用。安装说明请参考 {0}。",
       "cliLink": "ptd-cli",
       "setupCommand": "运行以下命令将此扩展注册到 CLI 工具：",

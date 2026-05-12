@@ -1,7 +1,7 @@
-# PT-depiler AI Coding Agent Instructions
+# PT-reseed AI Coding Agent Instructions
 
 ## Project Overview
-PT-depiler is a browser extension (Manifest v3) for enhancing Private Tracker (PT) site usability. Built with Vue 3 + TypeScript + Vuetify, it provides multi-site search, torrent management, and downloader integration.
+PT-reseed is a browser extension (Manifest v3) for enhancing Private Tracker (PT) site usability. Built with Vue 3 + TypeScript + Vuetify, it provides multi-site search, torrent management, and downloader integration.
 
 ## Architecture & Key Components
 

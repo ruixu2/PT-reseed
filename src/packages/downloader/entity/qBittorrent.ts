@@ -483,6 +483,7 @@ export default class QBittorrent extends AbstractBittorrentClient<TorrentClientC
         downloadSpeed: torrent.dlspeed,
         totalUploaded: torrent.uploaded,
         totalDownloaded: torrent.downloaded,
+        trackers: torrent.tracker ? [torrent.tracker] : [],
         raw: torrent,
         clientId: this.config.id,
       } as QbittorrentTorrent;
@@ -538,5 +539,18 @@ export default class QBittorrent extends AbstractBittorrentClient<TorrentClientC
   public override async getClientLabels(): Promise<string[]> {
     const { data } = await this.request<string[]>("/torrents/tags");
     return data;
+  }
+
+  // 获取种子文件列表
+  public async getTorrentFiles(hash: string): Promise<any[]> {
+    const { data } = await this.request<any[]>("/torrents/files", {
+      params: { hash },
+    });
+
+    return data.map((file) => ({
+      name: file.name,
+      path: file.name,
+      length: file.size,
+    }));
   }
 }
