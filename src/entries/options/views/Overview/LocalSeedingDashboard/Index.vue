@@ -405,7 +405,6 @@ onMounted(loadDashboardData);
             density="compact"
             class="elevation-0"
             hover
-            multi-sort
           >
             <template #item.name="{ item }">
               <div class="d-flex align-center text-truncate" style="max-width: 500px">

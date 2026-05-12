@@ -8,6 +8,15 @@ import {
   TKeepUploadTaskStorageSchema,
 } from "@/shared/types.ts";
 
+export interface ISeedingTrendSnapshot {
+  timestamp: number;
+  totalSeeds: number;
+  ptSeeds: number;
+  btSeeds: number;
+  totalSize: number;
+  totalUploaded: number;
+}
+
 export interface IExtensionStorageSchema {
   // 既可以被 pinia 使用，也可以被其他地方使用
   config: IConfigPiniaStorageSchema;
@@ -17,6 +26,7 @@ export interface IExtensionStorageSchema {
   userInfo: TUserInfoStorageSchema; // 用于存储用户信息
   searchResultSnapshot: TSearchResultSnapshotStorageSchema; // 用于存储搜索结果快照
   keepUploadTask: TKeepUploadTaskStorageSchema; // 用于存储辅种任务
+  seedingTrend: ISeedingTrendSnapshot[]; // 做种趋势快照
 }
 
 export type TExtensionStorageKey = keyof IExtensionStorageSchema;
