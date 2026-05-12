@@ -352,7 +352,34 @@
     "clientDist": "客户端负载分布",
     "siteDist": "站点保种分布 (Top 15)",
     "seedCount": "保种数量",
-    "topHugeSeeds": "硬盘杀手榜 (Top 10 大体积资源)"
+    "topHugeSeeds": "硬盘杀手榜 (Top 10 大体积资源)",
+    "filter": {
+      "search": "搜索种子名称...",
+      "site": "站点",
+      "client": "客户端",
+      "status": "状态",
+      "matchCount": "匹配 {count} 个"
+    },
+    "table": {
+      "name": "名称",
+      "size": "大小",
+      "uploaded": "上传量",
+      "ratio": "分享率",
+      "status": "状态",
+      "site": "站点",
+      "client": "客户端",
+      "dateAdded": "添加时间",
+      "noMatch": "没有符合当前筛选条件的种子"
+    },
+    "status": {
+      "seeding": "做种中",
+      "paused": "已暂停",
+      "error": "报错",
+      "downloading": "下载中",
+      "checking": "校验中",
+      "queued": "排队中",
+      "unknown": "未知"
+    }
   },
   "KeepUploadTask": {
     "title": "辅种任务",

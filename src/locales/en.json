@@ -352,7 +352,34 @@
     "clientDist": "Client Load Distribution",
     "siteDist": "Site Seeding Distribution (Top 15)",
     "seedCount": "Seed Count",
-    "topHugeSeeds": "Space Killers (Top 10 Huge Seeds)"
+    "topHugeSeeds": "Space Killers (Top 10 Huge Seeds)",
+    "filter": {
+      "search": "Search torrents...",
+      "site": "Site",
+      "client": "Client",
+      "status": "Status",
+      "matchCount": "{count} matched"
+    },
+    "table": {
+      "name": "Name",
+      "size": "Size",
+      "uploaded": "Uploaded",
+      "ratio": "Ratio",
+      "status": "Status",
+      "site": "Site",
+      "client": "Client",
+      "dateAdded": "Added Date",
+      "noMatch": "No torrents match the current filter criteria."
+    },
+    "status": {
+      "seeding": "Seeding",
+      "paused": "Paused",
+      "error": "Error",
+      "downloading": "Downloading",
+      "checking": "Checking",
+      "queued": "Queued",
+      "unknown": "Unknown"
+    }
   },
   "KeepUploadTask": {
     "title": "Reseed Tasks",
