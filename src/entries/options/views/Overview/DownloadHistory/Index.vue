@@ -4,9 +4,9 @@ import { onMounted, ref, shallowRef, computed } from "vue";
 import { useDisplay, type DataTableHeader } from "vuetify";
 
 import { sendMessage } from "@/messages.ts";
-import { formatDate } from "@/options/utils.ts";
+import { formatDate, formatSize } from "@/options/utils.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
-import type { ITorrentDownloadMetadata, TTorrentDownloadKey } from "@/shared/types.ts";
+import type { ITorrentDownloadMetadata, TTorrentDownloadKey, TTorrentDownloadStatus } from "@/shared/types.ts";
 
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import SiteName from "@/options/components/SiteName.vue";
@@ -23,13 +23,22 @@ import {
   downloadStatusMap,
   tableCustomFilter,
   throttleLoadDownloadHistory,
-} from "./utils.ts"; // <-- 主要方法
+} from "./utils.ts";
 
 const { t } = useI18n();
 const configStore = useConfigStore();
 const display = useDisplay();
 
 const { tableFilterRef, tableWaitFilterRef, tableFilterFn } = tableCustomFilter;
+
+const statusFilter = ref<TTorrentDownloadStatus[]>([]);
+const statusOptions: TTorrentDownloadStatus[] = ["pending", "downloading", "completed", "failed"];
+
+const filteredHistoryList = computed(() => {
+  const list = downloadHistoryList.value;
+  if (statusFilter.value.length === 0) return list;
+  return list.filter((item) => statusFilter.value.includes(item.downloadStatus));
+});
 
 const tableHeader = computed(
   () =>
@@ -126,6 +135,21 @@ onMounted(() => {
         <v-spacer />
 
         <!-- 筛选框 -->
+        <v-select
+          v-model="statusFilter"
+          :items="statusOptions"
+          :item-title="(s) => t(`TorrentDownloadStatus.${s}`)"
+          :label="t('common.status')"
+          density="compact"
+          variant="outlined"
+          hide-details
+          multiple
+          clearable
+          chips
+          max-visible-chips="2"
+          style="max-width: 280px"
+          class="mr-2"
+        />
         <v-text-field
           v-model="tableWaitFilterRef"
           append-icon="mdi-magnify"
@@ -144,9 +168,9 @@ onMounted(() => {
       <v-data-table
         v-model="tableSelected"
         :custom-filter="tableFilterFn"
-        :filter-keys="['id'] /* 对每个item值只检索一次 */"
+        :filter-keys="['id']"
         :headers="tableHeader"
-        :items="downloadHistoryList"
+        :items="filteredHistoryList"
         :items-per-page="configStore.tableBehavior.DownloadHistory.itemsPerPage"
         :multi-sort="configStore.enableTableMultiSort"
         :search="tableFilterRef"
@@ -225,11 +249,111 @@ onMounted(() => {
     @all-delete="() => throttleLoadDownloadHistory()"
   />
 
-  <v-dialog v-model="showDownloadDetailDialog" width="800">
-    <v-card>
+  <v-dialog v-model="showDownloadDetailDialog" max-width="700">
+    <v-card v-if="downloadDetail.id != null">
+      <v-card-title class="d-flex align-center text-subtitle-1">
+        <v-icon class="mr-2">mdi-information-outline</v-icon>
+        {{ t("DownloadHistory.detail.title") }}
+        <v-spacer></v-spacer>
+        <v-btn icon="mdi-close" variant="text" size="small" @click="showDownloadDetailDialog = false"></v-btn>
+      </v-card-title>
+      <v-divider></v-divider>
       <v-card-text>
-        <pre> {{ JSON.stringify(downloadDetail, null, 2) }}</pre>
+        <v-list density="compact" class="pa-0">
+          <v-list-item>
+            <template #prepend><v-icon class="mr-3">mdi-web</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{ t("common.site") }}</v-list-item-title>
+            <v-list-item-subtitle class="d-flex align-center">
+              <SiteFavicon :site-id="downloadDetail.siteId" :size="16" class="mr-1" />
+              <SiteName :site-id="downloadDetail.siteId" />
+            </v-list-item-subtitle>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <template #prepend><v-icon class="mr-3">mdi-label</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{ t("DownloadHistory.table.title") }}</v-list-item-title>
+            <v-list-item-subtitle class="text-body-2">{{ downloadDetail.title || "-" }}</v-list-item-subtitle>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <template #prepend><v-icon class="mr-3">mdi-server</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{
+              t("DownloadHistory.table.downloader")
+            }}</v-list-item-title>
+            <v-list-item-subtitle>
+              <DownloaderLabel :downloader="downloadDetail.downloaderId" />
+            </v-list-item-subtitle>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <template #prepend><v-icon class="mr-3">mdi-calendar</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{
+              t("DownloadHistory.table.downloadAt")
+            }}</v-list-item-title>
+            <v-list-item-subtitle>{{ formatDate(downloadDetail.downloadAt ?? 0) }}</v-list-item-subtitle>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <template #prepend><v-icon class="mr-3">mdi-information</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{
+              t("DownloadHistory.table.status")
+            }}</v-list-item-title>
+            <v-list-item-subtitle>
+              <v-chip
+                :prepend-icon="downloadStatusMap[downloadDetail.downloadStatus as TTorrentDownloadStatus]?.icon"
+                :color="downloadStatusMap[downloadDetail.downloadStatus as TTorrentDownloadStatus]?.color"
+                size="x-small"
+                label
+              >
+                {{ downloadStatusMap[downloadDetail.downloadStatus as TTorrentDownloadStatus]?.title }}
+              </v-chip>
+            </v-list-item-subtitle>
+          </v-list-item>
+          <v-divider v-if="downloadDetail.torrent?.size"></v-divider>
+          <v-list-item v-if="downloadDetail.torrent?.size">
+            <template #prepend><v-icon class="mr-3">mdi-harddisk</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{ t("common.size") }}</v-list-item-title>
+            <v-list-item-subtitle>{{ formatSize(downloadDetail.torrent.size) }}</v-list-item-subtitle>
+          </v-list-item>
+          <v-divider v-if="downloadDetail.addTorrentOptions?.savePath"></v-divider>
+          <v-list-item v-if="downloadDetail.addTorrentOptions?.savePath">
+            <template #prepend><v-icon class="mr-3">mdi-folder-open</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{
+              t("DownloadHistory.detail.savePath")
+            }}</v-list-item-title>
+            <v-list-item-subtitle class="text-caption">{{
+              downloadDetail.addTorrentOptions.savePath
+            }}</v-list-item-subtitle>
+          </v-list-item>
+          <v-divider v-if="downloadDetail.addTorrentResult?.success != null"></v-divider>
+          <v-list-item v-if="downloadDetail.addTorrentResult?.success != null">
+            <template #prepend><v-icon class="mr-3">mdi-check-circle</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{
+              t("DownloadHistory.detail.addResult")
+            }}</v-list-item-title>
+            <v-list-item-subtitle>
+              <v-icon :color="downloadDetail.addTorrentResult.success ? 'success' : 'error'" size="small" class="mr-1">
+                {{ downloadDetail.addTorrentResult.success ? "mdi-check" : "mdi-close" }}
+              </v-icon>
+              {{ downloadDetail.addTorrentResult.success ? t("common.success") : t("common.fail") }}
+            </v-list-item-subtitle>
+          </v-list-item>
+          <v-divider v-if="downloadDetail.addTorrentResult?.message"></v-divider>
+          <v-list-item v-if="downloadDetail.addTorrentResult?.message">
+            <template #prepend><v-icon class="mr-3">mdi-message-text</v-icon></template>
+            <v-list-item-title class="text-caption text-grey">{{
+              t("DownloadHistory.detail.resultMsg")
+            }}</v-list-item-title>
+            <v-list-item-subtitle class="text-caption">{{
+              downloadDetail.addTorrentResult.message
+            }}</v-list-item-subtitle>
+          </v-list-item>
+        </v-list>
       </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn variant="text" @click="showDownloadDetailDialog = false">{{ t("common.close") }}</v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>

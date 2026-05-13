@@ -124,6 +124,18 @@ onMounted(async () => {
       </v-row>
     </v-card-title>
 
+    <!-- Loading skeletons -->
+    <div
+      v-if="runtimeStore.mediaServerSearch.isSearching && runtimeStore.mediaServerSearch.searchResult.length === 0"
+      class="masonry-grid"
+    >
+      <div v-for="n in 14" :key="n" class="masonry-item">
+        <v-card>
+          <v-skeleton-loader class="bg-surface" type="image, list-item-two-line" />
+        </v-card>
+      </div>
+    </div>
+
     <!--  瀑布流形式展示媒体服务器搜索结果 -->
     <div v-if="runtimeStore.mediaServerSearch.searchResult.length > 0" class="masonry-grid">
       <div v-for="item in runtimeStore.mediaServerSearch.searchResult" :key="item.url" class="masonry-item">

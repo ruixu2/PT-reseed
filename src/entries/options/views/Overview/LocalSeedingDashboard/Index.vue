@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, provide } from "vue";
+import { ref, onMounted, onUnmounted, computed, provide } from "vue";
 import { useI18n } from "vue-i18n";
 import { sendMessage } from "@/messages.ts";
 import { formatSize, formatDate } from "@/options/utils.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { getHostFromUrl } from "@ptd/site";
+import type { ISeedingTrendSnapshot } from "@/storage.ts";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 
 import VChart, { THEME_KEY } from "vue-echarts";
 import { use as useEcharts, type ComposeOption } from "echarts/core";
-import { PieChart, BarChart, type PieSeriesOption, type BarSeriesOption } from "echarts/charts";
+import {
+  PieChart,
+  BarChart,
+  LineChart,
+  type PieSeriesOption,
+  type BarSeriesOption,
+  type LineSeriesOption,
+} from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import {
   TitleComponent,
@@ -23,7 +31,16 @@ import {
   type GridComponentOption,
 } from "echarts/components";
 
-useEcharts([TitleComponent, TooltipComponent, LegendComponent, GridComponent, PieChart, BarChart, CanvasRenderer]);
+useEcharts([
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+  PieChart,
+  BarChart,
+  LineChart,
+  CanvasRenderer,
+]);
 
 const { t } = useI18n();
 const configStore = useConfigStore();
@@ -33,6 +50,7 @@ const echartsTheme = computed(() => (configStore.uiTheme === "dark" ? "dark" : n
 provide(THEME_KEY, echartsTheme);
 
 const loading = ref(true);
+const refreshing = ref(false);
 
 const stats = ref({
   totalSeeds: 0,
@@ -46,6 +64,158 @@ const stats = ref({
 
 const allTorrents = ref<any[]>([]);
 
+// --- Auto Refresh ---
+const refreshInterval = ref(0);
+const lastRefreshAt = ref<number>(0);
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+function startRefresh() {
+  stopRefresh();
+  if (refreshInterval.value > 0) {
+    refreshTimer = setInterval(() => {
+      loadDashboardData();
+    }, refreshInterval.value * 1000);
+  }
+}
+
+function stopRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+onUnmounted(() => {
+  stopRefresh();
+});
+
+function onRefreshIntervalChange(val: number) {
+  refreshInterval.value = val;
+  startRefresh();
+}
+
+function formatLastRefresh() {
+  if (!lastRefreshAt.value) return "";
+  const now = Date.now();
+  const diff = Math.floor((now - lastRefreshAt.value) / 1000);
+  if (diff < 60) return t("LocalSeedingDashboard.refresh.justNow");
+  return t("LocalSeedingDashboard.refresh.ago", { seconds: diff });
+}
+
+// --- Trend Chart ---
+const trendSnapshots = ref<ISeedingTrendSnapshot[]>([]);
+const trendChartLoading = ref(false);
+
+type EChartsLineOption = ComposeOption<
+  TitleComponentOption | TooltipComponentOption | LegendComponentOption | GridComponentOption | LineSeriesOption
+>;
+
+const trendChartOption = ref<EChartsLineOption>({});
+
+async function loadTrendData() {
+  try {
+    trendSnapshots.value = ((await sendMessage("getExtStorage", "seedingTrend")) as ISeedingTrendSnapshot[]) || [];
+  } catch (e) {
+    trendSnapshots.value = [];
+  }
+}
+
+async function saveTrendSnapshot() {
+  const now = Date.now();
+  const snapshot: ISeedingTrendSnapshot = {
+    timestamp: now,
+    totalSeeds: stats.value.totalSeeds,
+    ptSeeds: stats.value.ptSeeds,
+    btSeeds: stats.value.btSeeds,
+    totalSize: stats.value.totalSize,
+    totalUploaded: stats.value.totalUploaded,
+  };
+
+  const existing = trendSnapshots.value.filter((s) => now - s.timestamp < 86400000 * 7);
+  existing.push(snapshot);
+
+  if (existing.length > 500) {
+    existing.splice(0, existing.length - 500);
+  }
+
+  trendSnapshots.value = existing;
+  try {
+    await sendMessage("setExtStorage", { key: "seedingTrend", value: existing });
+  } catch (e) {
+    console.error("Failed to save trend snapshot", e);
+  }
+}
+
+function buildTrendChart() {
+  if (trendSnapshots.value.length < 2) return;
+  const data = trendSnapshots.value;
+
+  const times = data.map((s) => formatDate(s.timestamp, "MM-dd HH:mm"));
+  const seedCounts = data.map((s) => s.totalSeeds);
+  const sizeValues = data.map((s) => s.totalSize);
+  const ptCounts = data.map((s) => s.ptSeeds);
+  const btCounts = data.map((s) => s.btSeeds);
+
+  trendChartOption.value = {
+    title: { text: t("LocalSeedingDashboard.trend.title"), left: "center" },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "cross" },
+    },
+    legend: { bottom: 0, type: "scroll" },
+    grid: { left: "3%", right: "4%", bottom: "22%", containLabel: true },
+    xAxis: { type: "category", data: times, axisLabel: { interval: "auto", rotate: 30, fontSize: 10 } },
+    yAxis: [
+      { type: "value", name: t("LocalSeedingDashboard.trend.seedCount"), position: "left" },
+      {
+        type: "value",
+        name: t("LocalSeedingDashboard.trend.size"),
+        position: "right",
+        axisLabel: { formatter: (v: number) => `${formatSize(v)}` },
+      },
+    ],
+    series: [
+      {
+        name: t("LocalSeedingDashboard.trend.totalSeeds"),
+        type: "line",
+        data: seedCounts,
+        smooth: true,
+        yAxisIndex: 0,
+        itemStyle: { color: "#5C6BC0" },
+        emphasis: { focus: "series" },
+      },
+      {
+        name: t("LocalSeedingDashboard.trend.ptSeeds"),
+        type: "line",
+        data: ptCounts,
+        smooth: true,
+        yAxisIndex: 0,
+        itemStyle: { color: "#42A5F5" },
+        emphasis: { focus: "series" },
+      },
+      {
+        name: t("LocalSeedingDashboard.trend.btSeeds"),
+        type: "line",
+        data: btCounts,
+        smooth: true,
+        yAxisIndex: 0,
+        itemStyle: { color: "#26A69A" },
+        emphasis: { focus: "series" },
+      },
+      {
+        name: t("LocalSeedingDashboard.trend.totalSize"),
+        type: "line",
+        data: sizeValues,
+        smooth: true,
+        yAxisIndex: 1,
+        itemStyle: { color: "#EF5350" },
+        emphasis: { focus: "series" },
+      },
+    ],
+  };
+}
+
+// --- Filter ---
 const searchQuery = ref("");
 const filterSite = ref<string[]>([]);
 const filterClient = ref<string[]>([]);
@@ -82,6 +252,7 @@ const tableHeaders = computed(() => [
   { title: t("LocalSeedingDashboard.table.dateAdded"), key: "dateAdded", sortable: true, align: "center" as const },
 ]);
 
+// --- Charts ---
 type EChartsPieOption = ComposeOption<
   TitleComponentOption | TooltipComponentOption | LegendComponentOption | PieSeriesOption
 >;
@@ -91,6 +262,37 @@ type EChartsBarOption = ComposeOption<
 
 const clientDistributionChartOption = ref<EChartsPieOption>({});
 const siteDistributionChartOption = ref<EChartsBarOption>({});
+
+// --- Downloader Health ---
+interface IDownloaderHealth {
+  id: string;
+  name: string;
+  online: boolean;
+  upSpeed: number;
+  dlSpeed: number;
+  upData: number;
+  dlData: number;
+  seedCount: number;
+  errorCount: number;
+}
+const downloaderHealthList = ref<IDownloaderHealth[]>([]);
+
+// --- Label Distribution ---
+const labelDistributionChartOption = ref<EChartsBarOption>({});
+
+const labelStats = computed(() => {
+  const labelMap: Record<string, { count: number; totalSize: number; totalUploaded: number }> = {};
+  allTorrents.value.forEach((t) => {
+    const key = t.label || "(none)";
+    if (!labelMap[key]) labelMap[key] = { count: 0, totalSize: 0, totalUploaded: 0 };
+    labelMap[key].count++;
+    labelMap[key].totalSize += t.totalSize || 0;
+    labelMap[key].totalUploaded += t.totalUploaded || 0;
+  });
+  return Object.entries(labelMap)
+    .map(([label, data]) => ({ label, ...data }))
+    .sort((a, b) => b.count - a.count);
+});
 
 const stateChipColor: Record<string, string> = {
   seeding: "success",
@@ -102,6 +304,108 @@ const stateChipColor: Record<string, string> = {
   unknown: "grey",
 };
 
+// --- Detail Dialog ---
+const detailDialog = ref(false);
+const detailTorrent = ref<any>(null);
+
+function showDetail(torrent: any) {
+  detailTorrent.value = torrent;
+  detailDialog.value = true;
+}
+
+function openDownloader(address: string) {
+  window.open(address, "_blank");
+}
+
+function getDownloaderAddress(clientName: string): string {
+  for (const d of Object.values(metadataStore.downloaders)) {
+    if ((d.name || d.id) === clientName && d.address) {
+      return d.address;
+    }
+  }
+  return "";
+}
+
+async function loadDownloaderHealth() {
+  const downloaders = Object.values(metadataStore.downloaders).filter((d) => d.enabled);
+  const results: IDownloaderHealth[] = [];
+  for (const d of downloaders) {
+    try {
+      const [online, status] = await Promise.all([
+        sendMessage("pingDownloader", d.id).catch(() => false),
+        sendMessage("getDownloaderStatus", d.id).catch(() => null),
+      ]);
+      const seedCount = allTorrents.value.filter((t) => t.clientName === (d.name || d.id)).length;
+      const errorCount = allTorrents.value.filter(
+        (t) => t.clientName === (d.name || d.id) && (t.state === "error" || t.state === 5),
+      ).length;
+      results.push({
+        id: d.id,
+        name: d.name || d.id,
+        online: !!online,
+        upSpeed: status?.upSpeed || 0,
+        dlSpeed: status?.dlSpeed || 0,
+        upData: status?.upData || 0,
+        dlData: status?.dlData || 0,
+        seedCount,
+        errorCount,
+      });
+    } catch {
+      results.push({
+        id: d.id,
+        name: d.name || d.id,
+        online: false,
+        upSpeed: 0,
+        dlSpeed: 0,
+        upData: 0,
+        dlData: 0,
+        seedCount: 0,
+        errorCount: 0,
+      });
+    }
+  }
+  downloaderHealthList.value = results;
+}
+
+function buildLabelDistributionChart() {
+  if (labelStats.value.length === 0) return;
+  const top = labelStats.value.slice(0, 15);
+  const colors = [
+    "#2196F3",
+    "#4CAF50",
+    "#FF9800",
+    "#E91E63",
+    "#9C27B0",
+    "#00BCD4",
+    "#FF5722",
+    "#607D8B",
+    "#795548",
+    "#3F51B5",
+    "#009688",
+    "#FFC107",
+    "#673AB7",
+    "#CDDC39",
+    "#F44336",
+  ];
+  labelDistributionChartOption.value = {
+    title: { text: t("LocalSeedingDashboard.labelDist"), left: "center" },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+    xAxis: { type: "category", data: top.map((s) => s.label), axisLabel: { interval: 0, rotate: 30 } },
+    yAxis: { type: "value" },
+    series: [
+      {
+        name: t("LocalSeedingDashboard.seedCount"),
+        type: "bar",
+        data: top.map((s) => s.count),
+        itemStyle: { color: (params: any) => colors[params.dataIndex % colors.length] },
+        label: { show: true, position: "top" },
+      },
+    ],
+  };
+}
+
+// --- Main Data ---
 async function loadDashboardData() {
   loading.value = true;
   try {
@@ -226,14 +530,24 @@ async function loadDashboardData() {
         },
       ],
     };
+
+    await loadDownloaderHealth();
+    buildLabelDistributionChart();
+    await saveTrendSnapshot();
+    buildTrendChart();
+    lastRefreshAt.value = Date.now();
   } catch (e) {
     console.error("Dashboard Load Error", e);
   } finally {
     loading.value = false;
+    refreshing.value = false;
   }
 }
 
-onMounted(loadDashboardData);
+onMounted(async () => {
+  await loadTrendData();
+  await loadDashboardData();
+});
 </script>
 
 <template>
@@ -242,7 +556,27 @@ onMounted(loadDashboardData);
       <v-card-title class="d-flex align-center">
         {{ t("route.Overview.LocalSeedingDashboard") }}
         <v-spacer></v-spacer>
-        <v-btn icon="mdi-refresh" variant="text" size="small" @click="loadDashboardData"></v-btn>
+        <v-chip v-if="lastRefreshAt" size="x-small" variant="text" class="mr-2 text-caption text-grey">
+          {{ formatLastRefresh() }}
+        </v-chip>
+        <v-select
+          v-model="refreshInterval"
+          :items="[
+            { title: t('LocalSeedingDashboard.refresh.off'), value: 0 },
+            { title: t('LocalSeedingDashboard.refresh.seconds', { seconds: 10 }), value: 10 },
+            { title: t('LocalSeedingDashboard.refresh.seconds', { seconds: 30 }), value: 30 },
+            { title: t('LocalSeedingDashboard.refresh.seconds', { seconds: 60 }), value: 60 },
+          ]"
+          item-title="title"
+          item-value="value"
+          density="compact"
+          variant="outlined"
+          hide-details
+          class="mr-2"
+          style="width: 100px"
+          @update:model-value="onRefreshIntervalChange"
+        />
+        <v-btn icon="mdi-refresh" variant="text" size="small" :loading="refreshing" @click="loadDashboardData"></v-btn>
       </v-card-title>
       <v-card-text>
         <div v-if="stats.totalSeeds === 0 && !loading" class="text-center pa-8 text-grey">
@@ -319,6 +653,14 @@ onMounted(loadDashboardData);
           </v-row>
 
           <v-row class="mb-6">
+            <v-col cols="12" md="12">
+              <v-card variant="outlined" class="pa-4">
+                <v-chart :option="trendChartOption" autoresize style="height: 300px" />
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row class="mb-6">
             <v-col cols="12" md="4">
               <v-card variant="outlined" class="pa-4 h-100">
                 <v-chart :option="clientDistributionChartOption" autoresize style="height: 300px" />
@@ -330,6 +672,104 @@ onMounted(loadDashboardData);
               </v-card>
             </v-col>
           </v-row>
+
+          <!-- Downloader Health -->
+          <v-card variant="outlined" class="mb-4">
+            <v-card-title class="text-subtitle-1 pb-0 d-flex align-center">
+              <v-icon class="mr-2">mdi-server</v-icon>
+              {{ t("LocalSeedingDashboard.health.title") }}
+            </v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col v-for="h in downloaderHealthList" :key="h.id" cols="12" sm="6" md="4" lg="3">
+                  <v-card :color="h.online ? 'grey-lighten-4' : 'red-lighten-5'" variant="flat" class="pa-3 h-100">
+                    <div class="d-flex align-center mb-2">
+                      <v-icon :color="h.online ? 'success' : 'error'" size="small" class="mr-2">
+                        {{ h.online ? "mdi-check-circle" : "mdi-alert-circle" }}
+                      </v-icon>
+                      <span class="text-body-2 font-weight-bold text-truncate">{{ h.name }}</span>
+                    </div>
+                    <v-row dense>
+                      <v-col cols="6" class="text-caption text-grey">{{
+                        t("LocalSeedingDashboard.health.seedCount")
+                      }}</v-col>
+                      <v-col cols="6" class="text-caption text-right">{{ h.seedCount }}</v-col>
+                      <v-col cols="6" class="text-caption text-grey">{{
+                        t("LocalSeedingDashboard.health.upSpeed")
+                      }}</v-col>
+                      <v-col cols="6" class="text-caption text-right text-success">{{ formatSize(h.upSpeed) }}/s</v-col>
+                      <v-col cols="6" class="text-caption text-grey">{{
+                        t("LocalSeedingDashboard.health.dlSpeed")
+                      }}</v-col>
+                      <v-col cols="6" class="text-caption text-right text-primary">{{ formatSize(h.dlSpeed) }}/s</v-col>
+                      <v-col cols="6" class="text-caption text-grey">{{
+                        t("LocalSeedingDashboard.health.upData")
+                      }}</v-col>
+                      <v-col cols="6" class="text-caption text-right">{{ formatSize(h.upData) }}</v-col>
+                      <v-col cols="6" class="text-caption text-grey">{{
+                        t("LocalSeedingDashboard.health.dlData")
+                      }}</v-col>
+                      <v-col cols="6" class="text-caption text-right">{{ formatSize(h.dlData) }}</v-col>
+                      <v-col cols="6" class="text-caption text-grey">{{
+                        t("LocalSeedingDashboard.health.errorCount")
+                      }}</v-col>
+                      <v-col cols="6" class="text-caption text-right" :class="h.errorCount > 0 ? 'text-error' : ''">{{
+                        h.errorCount
+                      }}</v-col>
+                    </v-row>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <!-- Label Distribution -->
+          <v-card variant="outlined" class="mb-4">
+            <v-card-title class="text-subtitle-1 pb-0 d-flex align-center">
+              <v-icon class="mr-2">mdi-tag-multiple</v-icon>
+              {{ t("LocalSeedingDashboard.labelDist") }}
+              <v-spacer></v-spacer>
+              <span class="text-caption text-grey font-weight-regular">
+                {{ t("LocalSeedingDashboard.labelDistCount", { count: labelStats.length }) }}
+              </span>
+            </v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" md="7">
+                  <v-chart :option="labelDistributionChartOption" autoresize style="height: 280px" />
+                </v-col>
+                <v-col cols="12" md="5">
+                  <v-data-table
+                    :headers="[
+                      { title: t('LocalSeedingDashboard.table.name'), key: 'label', sortable: true },
+                      {
+                        title: t('LocalSeedingDashboard.health.seedCount'),
+                        key: 'count',
+                        sortable: true,
+                        align: 'end' as const,
+                      },
+                      {
+                        title: t('LocalSeedingDashboard.table.size'),
+                        key: 'totalSize',
+                        sortable: true,
+                        align: 'end' as const,
+                      },
+                    ]"
+                    :items="labelStats"
+                    item-value="label"
+                    density="compact"
+                    class="elevation-0"
+                    hide-default-footer
+                    hover
+                  >
+                    <template #item.totalSize="{ item }">
+                      <span class="text-no-wrap text-caption">{{ formatSize(item.totalSize) }}</span>
+                    </template>
+                  </v-data-table>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
 
           <v-card variant="outlined" class="mb-4">
             <v-card-text class="pb-0">
@@ -407,8 +847,14 @@ onMounted(loadDashboardData);
             hover
           >
             <template #item.name="{ item }">
-              <div class="d-flex align-center text-truncate" style="max-width: 500px">
-                <span class="text-body-2 font-weight-medium text-truncate">{{ item.name }}</span>
+              <div
+                class="d-flex align-center text-truncate cursor-pointer text-primary"
+                style="max-width: 500px"
+                @click="showDetail(item)"
+              >
+                <span class="text-body-2 font-weight-medium text-truncate text-decoration-underline-dashed">{{
+                  item.name
+                }}</span>
               </div>
             </template>
 
@@ -462,7 +908,167 @@ onMounted(loadDashboardData);
         </template>
       </v-card-text>
     </v-card>
+
+    <!-- Detail Dialog -->
+    <v-dialog v-model="detailDialog" max-width="600">
+      <v-card v-if="detailTorrent">
+        <v-card-title class="d-flex align-center text-subtitle-1">
+          <v-icon class="mr-2">mdi-information-outline</v-icon>
+          {{ t("LocalSeedingDashboard.detail.title") }}
+          <v-spacer></v-spacer>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="detailDialog = false"></v-btn>
+        </v-card-title>
+        <v-card-text>
+          <v-list density="compact" class="pa-0">
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-label</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.name")
+              }}</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2 font-weight-medium">{{
+                detailTorrent.name
+              }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-fingerprint</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">InfoHash</v-list-item-title>
+              <v-list-item-subtitle class="text-caption font-family-mono">{{
+                detailTorrent.infoHash
+              }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-harddisk</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.size")
+              }}</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2">{{ formatSize(detailTorrent.totalSize) }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-upload</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.uploaded")
+              }}</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2">{{
+                formatSize(detailTorrent.totalUploaded)
+              }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-download</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.detail.downloaded")
+              }}</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2">{{
+                formatSize(detailTorrent.totalDownloaded)
+              }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-swap-horizontal</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.ratio")
+              }}</v-list-item-title>
+              <v-list-item-subtitle>
+                <v-chip :color="detailTorrent.ratio >= 1 ? 'success' : 'orange'" size="x-small" label variant="flat">
+                  {{ detailTorrent.ratio.toFixed(3) }}
+                </v-chip>
+              </v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-information</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.status")
+              }}</v-list-item-title>
+              <v-list-item-subtitle>
+                <v-chip :color="stateChipColor[detailTorrent.state] || 'grey'" size="x-small" label variant="flat">
+                  {{ t(`LocalSeedingDashboard.status.${detailTorrent.state}`) }}
+                </v-chip>
+              </v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-web</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.site")
+              }}</v-list-item-title>
+              <v-list-item-subtitle class="d-flex align-center">
+                <SiteFavicon
+                  v-if="detailTorrent._site && detailTorrent._site !== 'Uncateg'"
+                  :site-id="detailTorrent._site"
+                  :size="16"
+                  class="mr-1"
+                />
+                {{ detailTorrent._site }}
+              </v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-server</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.client")
+              }}</v-list-item-title>
+              <v-list-item-subtitle>{{ detailTorrent.clientName }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-folder-open</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.detail.savePath")
+              }}</v-list-item-title>
+              <v-list-item-subtitle class="text-caption text-truncate">{{
+                detailTorrent.savePath
+              }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item>
+              <template #prepend><v-icon class="mr-3">mdi-calendar</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.table.dateAdded")
+              }}</v-list-item-title>
+              <v-list-item-subtitle>{{ formatDate(detailTorrent.dateAdded * 1000) }}</v-list-item-subtitle>
+            </v-list-item>
+            <v-divider v-if="detailTorrent.trackers && detailTorrent.trackers.length"></v-divider>
+            <v-list-item v-if="detailTorrent.trackers && detailTorrent.trackers.length">
+              <template #prepend><v-icon class="mr-3">mdi-link-variant</v-icon></template>
+              <v-list-item-title class="text-caption text-grey">{{
+                t("LocalSeedingDashboard.detail.trackers")
+              }}</v-list-item-title>
+              <v-list-item-subtitle>
+                <div v-for="tr in detailTorrent.trackers.slice(0, 5)" :key="tr" class="text-caption text-truncate">
+                  {{ tr }}
+                </div>
+                <div v-if="detailTorrent.trackers.length > 5" class="text-caption text-grey">
+                  +{{ detailTorrent.trackers.length - 5 }} more
+                </div>
+              </v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            :href="getDownloaderAddress(detailTorrent.clientName)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <v-icon start>mdi-open-in-new</v-icon>
+            {{ t("LocalSeedingDashboard.detail.openDownloader") }}
+          </v-btn>
+          <v-btn variant="text" @click="detailDialog = false">{{ t("common.close") }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
-<style scoped></style>
+<style scoped>
+.cursor-pointer {
+  cursor: pointer;
+}
+</style>

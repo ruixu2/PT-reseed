@@ -89,9 +89,7 @@ export default class Aria2 extends AbstractBittorrentClient<TorrentClientConfig>
 
   async ping(): Promise<boolean> {
     try {
-      const {
-        data: { result: version },
-      } = await this.methodSend<{ version: string }>("aria2.getVersion");
+      const { result: version } = await this.methodSend<{ version: string }>("aria2.getVersion");
       return !!version;
     } catch (e) {
       return false;
@@ -99,9 +97,9 @@ export default class Aria2 extends AbstractBittorrentClient<TorrentClientConfig>
   }
 
   protected async getClientVersionFromRemote(): Promise<string> {
-    const {
-      data: { result: version },
-    } = await this.methodSend<{ version: string; enabledFeatures: string[] }>("aria2.getVersion");
+    const { result: version } = await this.methodSend<{ version: string; enabledFeatures: string[] }>(
+      "aria2.getVersion",
+    );
     return `${version.version} (${version.enabledFeatures.join(", ")})`;
   }
 

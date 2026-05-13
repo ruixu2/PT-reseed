@@ -60,6 +60,10 @@
     "site": "站点",
     "type": "类型",
     "username": "用户名",
+    "seeders": "做种数",
+    "leechers": "下载数",
+    "publishTime": "发布时间",
+    "items": "项",
     "AdvanceFilterGenerateDialog": {
       "title": "生成高级过滤词",
       "keywords": "关键词",
@@ -163,7 +167,8 @@
   "connectCheck": {
     "default": "检查连接性",
     "error": "连接失败！请检查填写的信息或者你的远程服务器。",
-    "success": "连接成功，你可以顺利进行下一步。"
+    "success": "连接成功，你可以顺利进行下一步。",
+    "successWithSpeed": "连接成功！{speed}"
   },
   "downloaderLabel": {
     "localDownload": "本地下载"
@@ -248,7 +253,19 @@
       "title": "重新下载 {0} 条记录",
       "oldMethod": "按原下载方式重试",
       "selectDownloader": "选择下载服务器"
+    },
+    "detail": {
+      "title": "下载详情",
+      "savePath": "保存路径",
+      "addResult": "添加结果",
+      "resultMsg": "结果信息"
     }
+  },
+  "TorrentDownloadStatus": {
+    "pending": "等待中",
+    "downloading": "下载中",
+    "completed": "已完成",
+    "failed": "失败"
   },
   "CrossSeed": {
     "intro": "辅种查重功能可以扫描您下载器中已完成的种子，并分析不同站点之间的重复资源。同时支持根据本地种子元数据，在所有已配置的 PT 站中反向搜索可辅种的资源。",
@@ -268,7 +285,8 @@
       "groupName": "资源名称",
       "size": "大小",
       "count": "重复数",
-      "matchLevel": "匹配级别"
+      "matchLevel": "匹配级别",
+      "progress": "进度"
     },
     "matchLevel": {
       "L1": "完全匹配",
@@ -311,6 +329,7 @@
       "ignoreSelected": "忽略所选",
       "approveAll": "全部通过并注入",
       "batchApproved": "成功审核通过 {count} 个资源并注入下载器",
+      "batchApprovedSome": "成功 {succeeded} 个，失败 {failed} 个",
       "batchApprovedError": "批量审核注入失败",
       "batchIgnored": "已忽略 {count} 个资源",
       "batchIgnoredError": "批量忽略失败",
@@ -379,7 +398,40 @@
       "checking": "校验中",
       "queued": "排队中",
       "unknown": "未知"
-    }
+    },
+    "refresh": {
+      "off": "关闭",
+      "seconds": "{seconds}秒",
+      "justNow": "刚刚",
+      "ago": "{seconds}秒前"
+    },
+    "trend": {
+      "title": "做种趋势 (7天)",
+      "seedCount": "种子数",
+      "size": "体积",
+      "totalSeeds": "做种总数",
+      "ptSeeds": "PT 种子",
+      "btSeeds": "BT 种子",
+      "totalSize": "总体积"
+    },
+    "detail": {
+      "title": "种子详情",
+      "downloaded": "下载量",
+      "savePath": "保存路径",
+      "trackers": "Tracker 地址",
+      "openDownloader": "打开下载器"
+    },
+    "health": {
+      "title": "下载器健康度",
+      "seedCount": "做种数",
+      "upSpeed": "上传速度",
+      "dlSpeed": "下载速度",
+      "upData": "总上传量",
+      "dlData": "总下载量",
+      "errorCount": "报错数"
+    },
+    "labelDist": "标签分布",
+    "labelDistCount": "{count} 个标签"
   },
   "KeepUploadTask": {
     "title": "辅种任务",
@@ -705,12 +757,30 @@
       "filterLabel": "快照名称过滤",
       "action": {
         "view": "查看",
-        "editTitle": "编辑标题"
+        "editTitle": "编辑标题",
+        "detail": "详情"
       }
     },
     "EditNameDialog": {
       "title": "搜索快照重命名",
       "snapshotName": "快照名称"
+    },
+    "detail": {
+      "title": "快照详情",
+      "sites": "搜索站点数",
+      "matchedSites": "有结果站点",
+      "totalResults": "搜索结果数",
+      "costTime": "搜索耗时",
+      "searchKey": "搜索关键词",
+      "searchPlan": "搜索方案",
+      "createdAt": "创建时间",
+      "siteDistribution": "站点搜索结果分布",
+      "resultCount": "结果数",
+      "status": "状态",
+      "noSiteData": "暂无站点搜索数据",
+      "resultPreview": "搜索结果预览",
+      "showingCount": "显示 {count} / 共 {total} 条",
+      "noData": "快照数据不可用"
     }
   },
   "SetBase": {
@@ -928,7 +998,9 @@
     },
     "ClientStatusSpan": {
       "flushInterval": "刷新间隔 (s)"
-    }
+    },
+    "batchEnable": "启用",
+    "batchDisable": "禁用"
   },
   "SetSearchSolution": {
     "solution": "搜索方案",

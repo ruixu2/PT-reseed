@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { sendMessage } from "@/messages.ts";
 import { formatDate } from "@/options/utils.ts";
@@ -12,13 +12,27 @@ const queue = ref<IReseedTask[]>([]);
 const loading = ref(false);
 const timer = ref<any>(null);
 
+const searchQuery = ref("");
+const filterStatus = ref<string[]>([]);
+
 const showResults = ref(false);
 const results = ref<any[]>([]);
 const currentTask = ref<any>(null);
 
+const statusOptions = ["waiting", "searching", "matched", "no_match", "error", "completed"];
+
+const filteredQueue = computed(() => {
+  return queue.value.filter((item) => {
+    if (searchQuery.value && !item.name.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
+    if (filterStatus.value.length > 0 && !filterStatus.value.includes(item.status)) return false;
+    return true;
+  });
+});
+
 const headers = [
   { title: t("common.name"), key: "name", align: "start" as const },
   { title: t("common.status"), key: "status", align: "center" as const },
+  { title: t("CrossSeed.table.progress"), key: "progress", align: "center" as const },
   { title: t("common.date"), key: "addedAt", align: "end" as const },
   { title: t("common.action"), key: "action", align: "center" as const, sortable: false },
 ];
@@ -86,9 +100,45 @@ onUnmounted(() => {
       </v-btn>
     </v-card-title>
 
+    <v-card-text class="pt-0 pb-2">
+      <v-row dense align="center">
+        <v-col cols="12" sm="6" md="4">
+          <v-text-field
+            v-model="searchQuery"
+            :label="t('common.search')"
+            prepend-inner-icon="mdi-magnify"
+            density="compact"
+            variant="outlined"
+            hide-details
+            clearable
+          />
+        </v-col>
+        <v-col cols="6" sm="3" md="3">
+          <v-select
+            v-model="filterStatus"
+            :items="statusOptions"
+            :item-title="(s) => t(`CrossSeed.status.${s}`)"
+            :label="t('common.status')"
+            density="compact"
+            variant="outlined"
+            hide-details
+            multiple
+            clearable
+            chips
+            max-visible-chips="1"
+          />
+        </v-col>
+        <v-col cols="6" sm="3" md="auto" class="d-flex align-center">
+          <span class="text-caption text-grey">
+            {{ filteredQueue.length }} / {{ queue.length }} {{ t("common.items") }}
+          </span>
+        </v-col>
+      </v-row>
+    </v-card-text>
+
     <v-data-table
       :headers="headers"
-      :items="queue"
+      :items="filteredQueue"
       :loading="loading"
       density="compact"
       class="elevation-1"
@@ -98,6 +148,20 @@ onUnmounted(() => {
         <v-chip :color="getStatusColor(item.status)" size="x-small" label>
           {{ t(`CrossSeed.status.${item.status}`) }}
         </v-chip>
+      </template>
+
+      <template #item.progress="{ item }">
+        <div v-if="item.progress != null" class="d-flex align-center" style="min-width: 100px">
+          <v-progress-linear
+            :model-value="item.progress"
+            :color="getStatusColor(item.status)"
+            height="6"
+            rounded
+            class="mr-2"
+          ></v-progress-linear>
+          <span class="text-caption">{{ item.progress }}%</span>
+        </div>
+        <span v-else class="text-caption text-grey">-</span>
       </template>
 
       <template #item.addedAt="{ item }">

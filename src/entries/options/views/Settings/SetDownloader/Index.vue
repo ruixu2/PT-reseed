@@ -5,11 +5,13 @@ import { useI18n } from "vue-i18n";
 import { countBy } from "es-toolkit";
 import type { DataTableHeader } from "vuetify";
 
+import { formatSize } from "@/options/utils.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
 import type { TDownloaderKey } from "@/shared/types.ts";
+import { sendMessage } from "@/messages.ts";
 import { getDownloaderIcon, getDownloaderMetaData, type TorrentClientMetaData } from "@ptd/downloader";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 
@@ -103,12 +105,22 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
 }
 
 const testingStatus = ref<Record<string, "testing" | "success" | "error">>({});
+const testingSpeed = ref<Record<string, string>>({});
 async function testDownloaderConnection(downloaderId: string) {
   testingStatus.value[downloaderId] = "testing";
   try {
-    const success = (await sendMessage("pingDownloader", downloaderId)) as boolean;
+    const [success, status] = await Promise.all([
+      sendMessage("pingDownloader", downloaderId) as Promise<boolean>,
+      sendMessage("getDownloaderStatus", downloaderId).catch(() => null) as Promise<any>,
+    ]);
     testingStatus.value[downloaderId] = success ? "success" : "error";
-    if (success) {
+    if (success && status) {
+      testingSpeed.value[downloaderId] =
+        `${formatSize(status.upSpeed ?? 0)}/s ↑ ${formatSize(status.dlSpeed ?? 0)}/s ↓`;
+      runtimeStore.showSnakebar(t("connectCheck.successWithSpeed", { speed: testingSpeed.value[downloaderId] }), {
+        color: "success",
+      });
+    } else if (success) {
       runtimeStore.showSnakebar(t("connectCheck.success"), { color: "success" });
     } else {
       runtimeStore.showSnakebar(t("connectCheck.error"), { color: "error" });
@@ -119,8 +131,20 @@ async function testDownloaderConnection(downloaderId: string) {
   } finally {
     setTimeout(() => {
       delete testingStatus.value[downloaderId];
+      delete testingSpeed.value[downloaderId];
     }, 5000);
   }
+}
+
+async function batchToggleEnabled(targetEnabled: boolean) {
+  for (const id of tableSelected.value) {
+    if (metadataStore.downloaders[id]) {
+      await metadataStore.simplePatch("downloaders", id as any, "enabled", targetEnabled);
+    }
+  }
+  runtimeStore.showSnakebar(targetEnabled ? t("SetDownloader.batchEnabled") : t("SetDownloader.batchDisabled"), {
+    color: "success",
+  });
 }
 
 const runtimeStore = useRuntimeStore();
@@ -139,6 +163,21 @@ const runtimeStore = useRuntimeStore();
           color="error"
           icon="mdi-minus"
           @click="deleteDownloader(tableSelected)"
+        />
+
+        <NavButton
+          :disabled="tableSelected.length === 0"
+          color="green"
+          icon="mdi-check"
+          :text="t('SetDownloader.batchEnable')"
+          @click="() => batchToggleEnabled(true)"
+        />
+        <NavButton
+          :disabled="tableSelected.length === 0"
+          color="grey"
+          icon="mdi-close"
+          :text="t('SetDownloader.batchDisable')"
+          @click="() => batchToggleEnabled(false)"
         />
 
         <v-divider class="mx-2" inset vertical />

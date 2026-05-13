@@ -159,8 +159,16 @@ export default defineConfig({
           {
             name: "sort-asserts",
             config(config) {
+              config.build!.chunkSizeWarningLimit = 600;
               config.build!.rollupOptions!.output = {
                 ...config.build?.rollupOptions!.output,
+                manualChunks: {
+                  echarts: ["echarts"],
+                  "vue-echarts": ["vue-echarts"],
+                  vuetify: ["vuetify"],
+                  "date-fns": ["date-fns"],
+                  "crypto-js": ["crypto-js"],
+                },
                 chunkFileNames: (chunkInfo) => {
                   // 特殊情况下 facadeModuleId 可能为 null，这时我们使用 moduleIds 的最后一个作为 chunkName
                   const chunkName = chunkInfo.facadeModuleId || chunkInfo.moduleIds.slice(-1)[0];

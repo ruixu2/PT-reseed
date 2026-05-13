@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { sendMessage } from "@/messages.ts";
-import { formatSize } from "@/options/utils.ts";
+import { formatSize, formatDate } from "@/options/utils.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
+import { useConfigStore } from "@/options/stores/config.ts";
+import { applyPathMapping } from "~/helper.ts";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 
 const props = defineProps<{
@@ -15,16 +17,31 @@ const props = defineProps<{
 const emit = defineEmits(["update:modelValue"]);
 const { t } = useI18n();
 const runtimeStore = useRuntimeStore();
+const configStore = useConfigStore();
 
 const loading = ref<Record<string, boolean>>({});
 const targetDownloaderId = ref<string | null>(null);
 const downloaders = ref<any[]>([]);
+const siteFilter = ref<string[]>([]);
+
+const siteOptions = computed(() => {
+  const sites = new Set(props.results.map((r) => r.site).filter(Boolean));
+  return Array.from(sites).sort();
+});
+
+const filteredResults = computed(() => {
+  if (siteFilter.value.length === 0) return props.results;
+  return props.results.filter((r) => siteFilter.value.includes(r.site));
+});
 
 const headers = [
   { title: t("common.site"), key: "site", align: "start" as const },
   { title: t("common.title"), key: "title", align: "start" as const },
   { title: t("CrossSeed.table.matchLevel"), key: "matchLevel", align: "center" as const },
   { title: t("common.size"), key: "size", align: "end" as const },
+  { title: t("common.seeders"), key: "seeders", align: "center" as const },
+  { title: t("common.leechers"), key: "leechers", align: "center" as const },
+  { title: t("common.publishTime"), key: "time", align: "end" as const },
   { title: t("common.action"), key: "action", align: "center" as const, sortable: false },
 ];
 
@@ -62,7 +79,7 @@ async function quickCrossSeed(torrent: any) {
     const result: any = await sendMessage("downloadTorrent", {
       torrent,
       downloaderId: targetDownloaderId.value,
-      options: {
+      addTorrentOptions: {
         savePath: targetPath,
         addAtPaused: true,
       },
@@ -114,14 +131,28 @@ async function quickCrossSeed(torrent: any) {
           ></v-select>
         </div>
         <v-spacer></v-spacer>
+        <v-select
+          v-model="siteFilter"
+          :items="siteOptions"
+          :label="t('common.site')"
+          density="compact"
+          variant="outlined"
+          hide-details
+          multiple
+          clearable
+          chips
+          max-visible-chips="0"
+          style="max-width: 200px"
+          class="mr-2"
+        />
         <v-btn icon="mdi-close" variant="text" @click="emit('update:modelValue', false)"></v-btn>
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text class="pa-0" style="height: 600px">
-        <v-data-table :headers="headers" :items="results" class="elevation-0" density="compact">
+        <v-data-table :headers="headers" :items="filteredResults" class="elevation-0" density="compact">
           <template #item.site="{ item }">
             <div class="d-flex align-center">
-              <SiteFavicon :site-id="item.site" size="18" class="mr-2" />
+              <SiteFavicon :site-id="item.site" :size="18" class="mr-2" />
               <span class="text-caption font-weight-bold">{{ item.site }}</span>
             </div>
           </template>
@@ -152,6 +183,24 @@ async function quickCrossSeed(torrent: any) {
 
           <template #item.size="{ item }">
             <span class="text-no-wrap">{{ formatSize(item.size) }}</span>
+          </template>
+
+          <template #item.seeders="{ item }">
+            <span :class="(item.seeders ?? -1) >= 0 ? '' : 'text-grey'">
+              {{ (item.seeders ?? -1) >= 0 ? item.seeders : "-" }}
+            </span>
+          </template>
+
+          <template #item.leechers="{ item }">
+            <span :class="(item.leechers ?? -1) >= 0 ? '' : 'text-grey'">
+              {{ (item.leechers ?? -1) >= 0 ? item.leechers : "-" }}
+            </span>
+          </template>
+
+          <template #item.time="{ item }">
+            <span class="text-caption text-no-wrap">
+              {{ item.time ? formatDate(item.time, "yyyy-MM-dd") : "-" }}
+            </span>
           </template>
 
           <template #item.action="{ item }">

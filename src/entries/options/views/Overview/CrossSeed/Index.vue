@@ -10,6 +10,7 @@ import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import SearchResultDialog from "./SearchResultDialog.vue";
 import QueueList from "./QueueList.vue";
 import StagingArea from "./StagingArea.vue";
+import Statistics from "./Statistics.vue";
 
 const { t } = useI18n();
 const runtimeStore = useRuntimeStore();
@@ -19,7 +20,7 @@ const loading = ref(false);
 const downloaders = ref<any[]>([]);
 const selectedDownloader = ref<string | null>(null);
 const duplicates = ref<any[][]>([]);
-const expanded = ref<number[]>([]);
+const expanded = ref<any[]>([]);
 const tableSelected = ref<any[]>([]);
 
 const showSearchResultDialog = ref(false);
@@ -125,6 +126,9 @@ onMounted(async () => {
       <v-tab value="queue" prepend-icon="mdi-tray-full">
         {{ t("CrossSeed.tabs.queue") }}
       </v-tab>
+      <v-tab value="statistics" prepend-icon="mdi-chart-box-outline">
+        {{ t("CrossSeed.tabs.statistics") }}
+      </v-tab>
     </v-tabs>
 
     <v-window v-model="tab">
@@ -193,7 +197,7 @@ onMounted(async () => {
 
             <template #item.sites="{ item }">
               <div class="d-flex align-center">
-                <SiteFavicon v-for="siteId in item.sites" :key="siteId" :site-id="siteId" size="18" class="mr-1" />
+                <SiteFavicon v-for="siteId in item.sites" :key="siteId" :site-id="siteId" :size="18" class="mr-1" />
                 <v-icon v-if="item.sites.length === 0" size="small" color="grey">mdi-help-circle-outline</v-icon>
               </div>
             </template>
@@ -215,7 +219,7 @@ onMounted(async () => {
                   <v-list density="compact" bg-color="grey-lighten-4">
                     <v-list-item v-for="(subItem, index) in item.items" :key="index">
                       <template #prepend>
-                        <SiteFavicon v-if="subItem.originSite" :site-id="subItem.originSite" size="20" class="mr-3" />
+                        <SiteFavicon v-if="subItem.originSite" :site-id="subItem.originSite" :size="20" class="mr-3" />
                         <v-icon v-else icon="mdi-file-check" color="success" size="small" class="mr-2"></v-icon>
                       </template>
                       <v-list-item-title class="text-body-2 d-flex align-center">

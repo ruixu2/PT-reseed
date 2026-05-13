@@ -13,6 +13,8 @@ const runtimeStore = useRuntimeStore();
 const configStore = useConfigStore();
 
 const loading = ref(false);
+const batchLoading = ref(false);
+const batchProgress = ref({ current: 0, total: 0 });
 const pendingResults = ref<IReseedResult[]>([]);
 const tasksMap = ref<Record<string, IReseedTask>>({});
 const downloaders = ref<any[]>([]);
@@ -135,6 +137,9 @@ async function batchApprove() {
   const targetId = targetDownloaderId.value;
   if (!targetId) return;
 
+  batchLoading.value = true;
+  batchProgress.value = { current: 0, total: items.length };
+
   const succeeded: IReseedResult[] = [];
   const failed: IReseedResult[] = [];
 
@@ -158,6 +163,7 @@ async function batchApprove() {
     } catch {
       failed.push(result);
     }
+    batchProgress.value.current++;
   }
 
   if (succeeded.length > 0) {
@@ -178,11 +184,74 @@ async function batchApprove() {
 
   await loadData();
   selected.value = [];
+  batchLoading.value = false;
+}
+
+async function approveAll() {
+  const allPending = pendingResults.value.filter((r) => r.status === "pending");
+  if (allPending.length === 0) return;
+
+  const targetId = targetDownloaderId.value;
+  if (!targetId) return;
+
+  batchLoading.value = true;
+  batchProgress.value = { current: 0, total: allPending.length };
+
+  const succeeded: IReseedResult[] = [];
+  const failed: IReseedResult[] = [];
+
+  for (const result of allPending) {
+    const task = tasksMap.value[result.sourceInfoHash];
+    const targetPath = task?.savePath || "";
+    try {
+      const injectResult: any = await sendMessage("downloadTorrent", {
+        torrent: result.data,
+        downloaderId: targetId,
+        addTorrentOptions: {
+          savePath: targetPath,
+          addAtPaused: true,
+        },
+      });
+      if (injectResult.success) {
+        succeeded.push(result);
+      } else {
+        failed.push(result);
+      }
+    } catch {
+      failed.push(result);
+    }
+    batchProgress.value.current++;
+  }
+
+  if (succeeded.length > 0) {
+    await sendMessage("batchMarkReseedResultsStatus", {
+      items: succeeded.map((r) => ({
+        sourceInfoHash: r.sourceInfoHash,
+        siteId: r.siteId,
+        torrentId: r.torrentId,
+      })),
+      status: "injected",
+    });
+  }
+
+  await loadData();
+  selected.value = [];
+  batchLoading.value = false;
+
+  if (failed.length === 0) {
+    runtimeStore.showSnakebar(t("CrossSeed.staging.batchApproved", { count: succeeded.length }), { color: "success" });
+  } else {
+    runtimeStore.showSnakebar(
+      t("CrossSeed.staging.batchApprovedSome", { succeeded: succeeded.length, failed: failed.length }),
+      { color: "warning" },
+    );
+  }
 }
 
 async function batchIgnore() {
   const items = pendingResults.value.filter((r) => selected.value.includes(r.id) && r.status === "pending");
   if (items.length === 0) return;
+  batchLoading.value = true;
 
   try {
     await sendMessage("batchMarkReseedResultsStatus", {
@@ -198,6 +267,8 @@ async function batchIgnore() {
     selected.value = [];
   } catch {
     runtimeStore.showSnakebar(t("CrossSeed.staging.batchIgnoredError"), { color: "error" });
+  } finally {
+    batchLoading.value = false;
   }
 }
 
@@ -232,39 +303,61 @@ onUnmounted(() => {
           </v-card>
         </v-col>
         <v-col cols="12" sm="6">
-          <v-card variant="outlined" class="pa-2 d-flex align-center h-100">
-            <v-select
-              v-model="targetDownloaderId"
-              :items="downloaders"
-              item-title="name"
-              item-value="id"
-              :label="t('CrossSeed.staging.targetDownloader')"
-              hide-details
-              density="compact"
-              variant="outlined"
-              class="mr-2"
-            ></v-select>
-            <v-btn
+          <v-card variant="outlined" class="pa-2 h-100">
+            <div class="d-flex align-center flex-wrap ga-1">
+              <v-select
+                v-model="targetDownloaderId"
+                :items="downloaders"
+                item-title="name"
+                item-value="id"
+                :label="t('CrossSeed.staging.targetDownloader')"
+                hide-details
+                density="compact"
+                variant="outlined"
+                style="min-width: 160px"
+              ></v-select>
+              <v-btn
+                color="success"
+                variant="elevated"
+                size="small"
+                :disabled="selected.length === 0"
+                :loading="batchLoading"
+                @click="batchApprove"
+              >
+                <v-icon start>mdi-check-all</v-icon>
+                {{ t("CrossSeed.staging.approveSelected") }}
+              </v-btn>
+              <v-btn
+                color="grey"
+                variant="elevated"
+                size="small"
+                :disabled="selected.length === 0"
+                :loading="batchLoading"
+                @click="batchIgnore"
+              >
+                <v-icon start>mdi-close-box-multiple</v-icon>
+                {{ t("CrossSeed.staging.ignoreSelected") }}
+              </v-btn>
+              <v-btn
+                color="success"
+                variant="tonal"
+                size="small"
+                :disabled="totalPending === 0"
+                :loading="batchLoading"
+                @click="approveAll"
+              >
+                <v-icon start>mdi-fast-forward</v-icon>
+                {{ t("CrossSeed.staging.approveAll") }}
+              </v-btn>
+            </div>
+            <v-progress-linear
+              v-if="batchLoading && batchProgress.total > 0"
+              :model-value="(batchProgress.current / batchProgress.total) * 100"
               color="success"
-              variant="elevated"
-              :disabled="selected.length === 0"
-              :loading="loading"
-              @click="batchApprove"
-              class="mr-1"
-            >
-              <v-icon start>mdi-check-all</v-icon>
-              {{ t("CrossSeed.staging.approveSelected") }}
-            </v-btn>
-            <v-btn
-              color="grey"
-              variant="elevated"
-              :disabled="selected.length === 0"
-              :loading="loading"
-              @click="batchIgnore"
-            >
-              <v-icon start>mdi-close-box-multiple</v-icon>
-              {{ t("CrossSeed.staging.ignoreSelected") }}
-            </v-btn>
+              height="4"
+              rounded
+              class="mt-2"
+            ></v-progress-linear>
           </v-card>
         </v-col>
       </v-row>

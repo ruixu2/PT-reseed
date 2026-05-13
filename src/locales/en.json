@@ -60,6 +60,10 @@
     "site": "Site",
     "type": "Type",
     "username": "Username",
+    "seeders": "Seeders",
+    "leechers": "Leechers",
+    "publishTime": "Publish Time",
+    "items": "items",
     "AdvanceFilterGenerateDialog": {
       "title": "Generate Advanced Filter",
       "keywords": "Keywords",
@@ -160,11 +164,6 @@
       "SetSite": "Sites"
     }
   },
-  "connectCheck": {
-    "default": "Check Connect",
-    "error": "Connect Failed! Check Form Input or Remote Server",
-    "success": "Connect Successful! You can enter next step."
-  },
   "downloaderLabel": {
     "localDownload": "Local Download"
   },
@@ -248,7 +247,19 @@
       "title": "Re-download {0} records",
       "oldMethod": "Retry with original method",
       "selectDownloader": "Select Downloader"
+    },
+    "detail": {
+      "title": "Download Detail",
+      "savePath": "Save Path",
+      "addResult": "Add Result",
+      "resultMsg": "Result Message"
     }
+  },
+  "TorrentDownloadStatus": {
+    "pending": "Pending",
+    "downloading": "Downloading",
+    "completed": "Completed",
+    "failed": "Failed"
   },
   "CrossSeed": {
     "intro": "The Cross-Seeding feature can scan completed torrents in your downloaders and analyze duplicates across different sites. It also supports reverse searching for reseedable resources across all configured PT sites based on local torrent metadata.",
@@ -268,7 +279,8 @@
       "groupName": "Resource Name",
       "size": "Size",
       "count": "Duplicates",
-      "matchLevel": "Match Level"
+      "matchLevel": "Match Level",
+      "progress": "Progress"
     },
     "matchLevel": {
       "L1": "Exact Match",
@@ -311,6 +323,7 @@
       "ignoreSelected": "Ignore Selected",
       "approveAll": "Approve All & Inject",
       "batchApproved": "Successfully approved and injected {count} items",
+      "batchApprovedSome": "Injected {succeeded}, {failed} failed",
       "batchApprovedError": "Batch approve and inject failed",
       "batchIgnored": "Ignored {count} items",
       "batchIgnoredError": "Batch ignore failed",
@@ -379,7 +392,40 @@
       "checking": "Checking",
       "queued": "Queued",
       "unknown": "Unknown"
-    }
+    },
+    "refresh": {
+      "off": "Off",
+      "seconds": "{seconds}s",
+      "justNow": "Just now",
+      "ago": "{seconds}s ago"
+    },
+    "trend": {
+      "title": "Seeding Trend (7d)",
+      "seedCount": "Seed Count",
+      "size": "Size",
+      "totalSeeds": "Total Seeds",
+      "ptSeeds": "PT Seeds",
+      "btSeeds": "BT Seeds",
+      "totalSize": "Total Size"
+    },
+    "detail": {
+      "title": "Torrent Detail",
+      "downloaded": "Downloaded",
+      "savePath": "Save Path",
+      "trackers": "Trackers",
+      "openDownloader": "Open in Downloader"
+    },
+    "health": {
+      "title": "Downloader Health",
+      "seedCount": "Seeds",
+      "upSpeed": "Up Speed",
+      "dlSpeed": "Dl Speed",
+      "upData": "Total Upload",
+      "dlData": "Total Download",
+      "errorCount": "Errors"
+    },
+    "labelDist": "Label Distribution",
+    "labelDistCount": "{count} labels"
   },
   "KeepUploadTask": {
     "title": "Reseed Tasks",
@@ -705,12 +751,30 @@
       "filterLabel": "Filter by snapshot name",
       "action": {
         "view": "View",
-        "editTitle": "Edit Title"
+        "editTitle": "Edit Title",
+        "detail": "Detail"
       }
     },
     "EditNameDialog": {
       "title": "Rename Search Snapshot",
       "snapshotName": "Snapshot Name"
+    },
+    "detail": {
+      "title": "Snapshot Detail",
+      "sites": "Sites Searched",
+      "matchedSites": "Sites with Results",
+      "totalResults": "Total Results",
+      "costTime": "Duration",
+      "searchKey": "Search Keyword",
+      "searchPlan": "Search Plan",
+      "createdAt": "Created At",
+      "siteDistribution": "Per-Site Result Distribution",
+      "resultCount": "Results",
+      "status": "Status",
+      "noSiteData": "No site search data",
+      "resultPreview": "Result Preview",
+      "showingCount": "Showing {count} of {total}",
+      "noData": "No data available for this snapshot."
     }
   },
   "SetBase": {
@@ -928,7 +992,15 @@
     },
     "ClientStatusSpan": {
       "flushInterval": "Flush Interval (s)"
-    }
+    },
+    "batchEnable": "Enable",
+    "batchDisable": "Disable"
+  },
+  "connectCheck": {
+    "default": "Check Connect",
+    "error": "Connect Failed! Check Form Input or Remote Server",
+    "success": "Connect Successful! You can enter next step.",
+    "successWithSpeed": "Connect Successful! {speed}"
   },
   "SetSearchSolution": {
     "solution": "Search Solution",

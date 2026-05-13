@@ -1,6 +1,6 @@
 import { onMessage, sendMessage } from "@/messages.ts";
 import { ptdIndexDb } from "../adapter/indexdb.ts";
-import type { IMetadataPiniaStorageSchema, ITorrentMetadata } from "@/shared/types.ts";
+import type { IConfigPiniaStorageSchema, IMetadataPiniaStorageSchema, ITorrentMetadata } from "@/shared/types.ts";
 import { logger } from "./logger.ts";
 import { parseTorrentName } from "./nameParser.ts";
 import { getHostFromUrl } from "@ptd/site";

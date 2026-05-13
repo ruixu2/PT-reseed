@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 
 import type { IKeepUploadTask } from "@/shared/types.ts";
@@ -18,7 +18,22 @@ const tasks = ref<IKeepUploadTask[]>([]);
 const selectedTasks = ref<IKeepUploadTask[]>([]);
 const expanded = ref<string[]>([]);
 const loading = ref(false);
-const tableKey = ref(0); // 用于强制刷新表格
+const tableKey = ref(0);
+const searchQuery = ref("");
+const filterSite = ref<string[]>([]);
+
+const siteOptions = computed(() => {
+  const sites = new Set(tasks.value.map((t) => t.items[0]?.site).filter(Boolean));
+  return Array.from(sites).sort();
+});
+
+const filteredTasks = computed(() => {
+  return tasks.value.filter((t) => {
+    if (searchQuery.value && !t.title.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
+    if (filterSite.value.length > 0 && !filterSite.value.includes(t.items[0]?.site)) return false;
+    return true;
+  });
+}); // 用于强制刷新表格
 
 const headers = [
   { title: t("KeepUploadTask.table.site"), key: "site", align: "center" as const, sortable: false },
@@ -204,12 +219,45 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
       </v-btn>
     </v-card-title>
 
+    <v-card-text class="pt-0 pb-2">
+      <v-row dense align="center">
+        <v-col cols="12" sm="6" md="4">
+          <v-text-field
+            v-model="searchQuery"
+            :label="t('common.search')"
+            prepend-inner-icon="mdi-magnify"
+            density="compact"
+            variant="outlined"
+            hide-details
+            clearable
+          />
+        </v-col>
+        <v-col cols="6" sm="3" md="3">
+          <v-select
+            v-model="filterSite"
+            :items="siteOptions"
+            :label="t('common.site')"
+            density="compact"
+            variant="outlined"
+            hide-details
+            multiple
+            clearable
+            chips
+            max-visible-chips="1"
+          />
+        </v-col>
+        <v-col cols="6" sm="3" md="auto" class="d-flex align-center">
+          <span class="text-caption text-grey"> {{ filteredTasks.length }} / {{ tasks.length }} </span>
+        </v-col>
+      </v-row>
+    </v-card-text>
+
     <v-data-table
       :key="tableKey"
       v-model="selectedTasks"
       v-model:expanded="expanded"
       :headers="headers"
-      :items="tasks"
+      :items="filteredTasks"
       :loading="loading"
       item-value="id"
       show-select

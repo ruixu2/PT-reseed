@@ -105,14 +105,14 @@ function removePathMapping(index: number) {
         >
           <template #chip="{ props, item }">
             <v-chip v-bind="props" size="small" class="ma-1">
-              <SiteFavicon :site-id="item.value" size="16" class="mr-1" />
+              <SiteFavicon :site-id="item.value" :size="16" class="mr-1" />
               {{ item.title }}
             </v-chip>
           </template>
           <template #item="{ props, item }">
             <v-list-item v-bind="props" :title="item.title">
               <template #prepend>
-                <SiteFavicon :site-id="item.value" size="20" class="mr-3" />
+                <SiteFavicon :site-id="item.value" :size="20" class="mr-3" />
               </template>
             </v-list-item>
           </template>

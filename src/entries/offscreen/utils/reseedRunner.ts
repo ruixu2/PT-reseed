@@ -183,7 +183,7 @@ async function processNextTask(task: IReseedTask) {
               const result: any = await sendMessage("downloadTorrent", {
                 torrent: res,
                 downloaderId: task.clientId,
-                options: {
+                addTorrentOptions: {
                   savePath: targetPath,
                   addAtPaused: true,
                 },
@@ -317,7 +317,7 @@ function isStrictSameFileList(local: ITorrentMetadata, remote: any): boolean {
       path: Array.isArray(f.path) ? f.path.join("/") : f.path,
       length: f.length,
     }))
-    .sort((x, y) => x.path.localeCompare(y.path));
+    .sort((x: any, y: any) => x.path.localeCompare(y.path));
 
   if (localFiles.length !== remoteFiles.length) return false;
 

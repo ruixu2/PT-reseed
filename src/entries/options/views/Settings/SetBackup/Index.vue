@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { getBackupServerIcon } from "@ptd/backupServer";
 import type { DataTableHeader } from "vuetify";
@@ -41,6 +41,14 @@ const tableSelected = ref<TBackupServerKey[]>([]);
 
 const localBackup = Symbol("localBackup");
 const doBackupStatus = ref<Record<TBackupServerKey | symbol, boolean>>({});
+const searchQuery = ref("");
+
+const filteredBackupServers = computed(() => {
+  const servers = metadataStore.getBackupServers;
+  if (!searchQuery.value) return servers;
+  const q = searchQuery.value.toLowerCase();
+  return servers.filter((s) => s.name.toLowerCase().includes(q) || s.type.toLowerCase().includes(q));
+});
 async function doBackup(backupServerId: TBackupServerKey | symbol) {
   doBackupStatus.value[backupServerId] = true;
 
@@ -116,7 +124,16 @@ async function confirmDeleteBackupServer(id: TBackupServerKey) {
 
         <v-spacer />
 
-        <v-text-field clearable density="compact" hide-details label="Search" max-width="500" single-line />
+        <v-text-field
+          v-model="searchQuery"
+          append-icon="mdi-magnify"
+          clearable
+          density="compact"
+          hide-details
+          label="Search"
+          max-width="500"
+          single-line
+        />
       </v-row>
     </v-card-title>
 
@@ -124,7 +141,7 @@ async function confirmDeleteBackupServer(id: TBackupServerKey) {
       v-model="tableSelected"
       :headers="fullTableHeader"
       :filter-keys="['id']"
-      :items="metadataStore.getBackupServers"
+      :items="filteredBackupServers"
       item-value="id"
       class="table-stripe table-header-no-wrap"
       show-select

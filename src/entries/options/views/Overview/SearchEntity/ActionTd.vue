@@ -100,9 +100,9 @@ async function quickCrossSeed(match: any) {
     const result: any = await sendMessage("downloadTorrent", {
       torrent,
       downloaderId: match.clientId,
-      options: {
+      addTorrentOptions: {
         savePath: match.savePath,
-        addAtPaused: true, // 辅种默认暂停安全
+        addAtPaused: true,
       },
     });
     if (result.success) {
